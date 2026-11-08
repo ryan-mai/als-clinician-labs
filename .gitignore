@@ -1,0 +1,6 @@
+# case-file PDF is event material; collaborators have their own copy
+*.pdf
+__pycache__/
+*.pyc
+.env
+.DS_Store
