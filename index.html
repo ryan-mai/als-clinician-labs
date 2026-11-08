@@ -3,130 +3,159 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ALS Clinician Labs</title>
+<title>NeuroMotion Console</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500&family=Doto:wght@700&family=Space+Grotesk:wght@500;600&display=swap">
+<link rel="stylesheet" href="theme.css">
 <style>
-  :root { --bg:#f6f7f9; --card:#fff; --ink:#1c2430; --mute:#5d6877; --line:#dfe3e8; --acc:#2b5fa8; --warn:#9a5b00; --warnbg:#fff4de; --bad:#b3261e; --ok:#1f7a4d; }
-  @media (prefers-color-scheme: dark) {
-    :root { --bg:#12161c; --card:#1b212a; --ink:#e8ecf1; --mute:#9aa6b5; --line:#2c3541; --acc:#7fb0f0; --warn:#f0c36b; --warnbg:#2c2412; --bad:#f2928b; --ok:#6fd1a0; }
-  }
-  * { box-sizing:border-box; }
-  body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif; }
-  main { max-width:880px; margin:0 auto; padding:16px; }
-  h1 { font-size:1.4rem; margin:8px 0 4px; } h2 { font-size:1.05rem; margin:0 0 8px; }
-  .sub { color:var(--mute); margin:0 0 12px; }
-  .banner { background:var(--warnbg); color:var(--warn); border:1px solid var(--warn); border-radius:10px; padding:10px 12px; margin:12px 0; font-size:.92rem; }
-  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:12px; }
-  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:12px; }
-  .card.done { border-color:var(--ok); }
-  .hint { color:var(--mute); font-size:.88rem; margin:0 0 8px; min-height:2.5em; }
-  button, .btn { font:inherit; border:1px solid var(--acc); background:var(--acc); color:#fff; border-radius:8px; padding:8px 14px; cursor:pointer; }
-  @media (prefers-color-scheme: dark) { button, .btn { color:#0b1118; } }
-  button.sec, label.btn.sec { background:transparent; color:var(--acc); }
-  button.rec { background:var(--bad); border-color:var(--bad); color:#fff; }
-  button:disabled { opacity:.5; cursor:default; }
-  .row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
-  canvas { width:100%; height:70px; background:transparent; border-top:1px solid var(--line); margin-top:8px; display:block; }
-  .feat { font-size:.82rem; color:var(--mute); font-variant-numeric:tabular-nums; margin-top:4px; }
-  .msg { font-size:.85rem; margin-top:4px; } .msg.w { color:var(--warn); } .msg.ok { color:var(--ok); } .msg.bad { color:var(--bad); }
-  pre#summary { white-space:pre-wrap; font:12px/1.4 ui-monospace,Consolas,monospace; background:var(--bg); border:1px solid var(--line); border-radius:8px; padding:8px; }
-  #result { margin-top:16px; }
-  .score { font-size:2.2rem; font-weight:700; font-variant-numeric:tabular-nums; }
-  .bar { position:relative; height:44px; border:1px solid var(--line); border-radius:8px; margin:10px 0 4px; overflow:hidden; background:linear-gradient(90deg,rgba(31,122,77,.18),rgba(179,38,30,.18)); }
-  .bar .mid { position:absolute; left:50%; top:0; bottom:0; border-left:1px dashed var(--mute); }
-  .bar .me { position:absolute; top:0; bottom:0; width:4px; background:var(--ink); transform:translateX(-2px); }
-  .scale { display:flex; justify-content:space-between; font-size:.75rem; color:var(--mute); }
-  table { border-collapse:collapse; width:100%; font-size:.88rem; } td,th { padding:4px 6px; border-bottom:1px solid var(--line); text-align:left; }
-  .pos { color:var(--bad); } .neg { color:var(--ok); }
-  details { margin-top:10px; } summary { cursor:pointer; color:var(--acc); }
-  small, .small { color:var(--mute); font-size:.8rem; }
-  .tabs { display:flex; gap:8px; margin:8px 0 12px; } .tab { background:transparent; color:var(--acc); } .tab.on { background:var(--acc); color:#fff; }
-  @media (prefers-color-scheme: dark) { .tab.on { color:#0b1118; } }
-  td.bad { color:var(--bad); font-weight:600; }
-  [hidden] { display:none !important; } .tlp { margin-top:12px; } input[type=range] { accent-color:var(--acc); }
+  body{min-height:100vh}
+  .app{display:grid;grid-template-columns:220px 1fr 300px;gap:16px;padding:20px 20px 20px 28px;max-width:1500px;margin:0}
+  .logo{font:600 22px var(--f-head);padding:6px 10px 18px}
+  nav a{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;margin-bottom:16px;border-radius:99px;color:var(--ink);text-decoration:none;background:var(--card);border:1px solid var(--glass-line)}
+  nav a.on{background:var(--pill);color:var(--page)}
+  aside:first-child{margin-right:20px;display:flex;flex-direction:column;position:sticky;top:20px;align-self:start;height:calc(100vh - 40px);min-height:520px}
+  .side-note{margin-top:auto;padding:18px;font-size:13px}
+  .body{display:flex;flex-direction:column;padding:16px;position:sticky;top:20px;align-self:start;height:calc(100vh - 40px);min-height:520px}
+  #fig{flex:1;min-height:340px}
+  .legend{display:flex;gap:10px;font-size:12px;color:var(--mute);justify-content:center;margin-top:6px}
+  .legend i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:4px}
+  #regionPanel{margin-top:10px;padding:12px 14px;border-radius:18px;background:var(--sage-l);font-size:13px;min-height:84px}
+  .head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+  .head h1{font-size:30px} .head .who{margin-top:2px;font-size:14px}
+  .head .acts{display:flex;align-items:center;gap:10px;flex-shrink:0}
+  .pill{white-space:nowrap}
+  /* Nura-style board: 4 tracks. charts take 1+2, right cards take 3+4 */
+  .main{display:grid;grid-template-columns:1fr 1fr 150px 150px;gap:14px;min-width:0;align-content:start}
+  .head{grid-column:1/-1}
+  .strip{grid-column:1/3;padding:6px 4px 0;display:flex;flex-direction:column;justify-content:space-between}
+  .nums{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+  .num{position:relative;padding-top:22px}
+  .num .pill{position:absolute;top:0;right:0;background:rgba(255,255,255,.85);color:#16191a;font:500 10px var(--f-body);padding:2px 8px}
+  .num .v{font-size:32px;line-height:1.1}
+  .num .v small{font:400 12px var(--f-body);color:var(--mute);margin-left:2px}
+  .num .l{font-size:11.5px;color:var(--mute);margin-top:2px}
+  .segs{display:flex;align-items:center;gap:6px;height:36px;margin:22px 0 8px;position:relative}
+  .segs .sg{flex:1 1 0;height:15px;border-radius:8px;background:rgba(95,122,92,.5);min-width:8px}
+  .segs .sg.fut{background:rgba(95,122,92,.22)}
+  .segs .cur{flex:0 0 auto;position:relative;display:flex;align-items:center;gap:14px;padding:7px 12px;border-radius:14px;background:rgba(112,138,110,.92);color:#fff;box-shadow:0 4px 12px rgba(60,80,60,.2)}
+  .segs .cur b{display:block;font:600 17px/1 var(--f-head);letter-spacing:-.01em}
+  .segs .cur small{display:block;font:400 9px/1.2 var(--f-body);opacity:.85;margin-top:2px;white-space:nowrap}
+  .segs .cur em{font-style:normal;font-size:13px;opacity:.9}
+  .segs .segtag{position:absolute;top:-21px;left:50%;transform:translateX(-50%);font:500 10px/1 var(--f-mono);background:var(--pill);color:var(--page);padding:4px 9px;border-radius:99px;white-space:nowrap}
+  .ai,.score{padding:16px 14px;display:flex;flex-direction:column;align-items:center;text-align:center;min-height:180px}
+  .ai h3,.score h3{font-size:15px}
+  .ai{background:linear-gradient(170deg,rgba(255,255,255,.55),rgba(169,189,164,.8))}
+  @media (prefers-color-scheme:dark){:root:not([data-theme=light]) .ai{background:linear-gradient(170deg,rgba(255,255,255,.08),rgba(95,122,92,.55))}}
+  .orb{width:38px;height:38px;border-radius:50%;margin:10px 0 8px;background:radial-gradient(circle at 35% 30%,#fff,#bfe3b8 45%,#6f8a6c);box-shadow:0 8px 18px rgba(80,120,80,.35)}
+  .ai p{margin:0;font-size:11.5px;line-height:1.45}
+  .score .big{font-size:50px;line-height:1;margin-top:14px}
+  .score .of{margin:6px 0 10px;width:70%;border-top:1px solid var(--line);padding-top:4px;color:var(--mute);font:500 13px var(--f-mono)}
+  .score .pill{background:var(--pill);color:var(--page);padding:5px 12px;font-size:11px;margin-top:auto}
+  /* green trend cards */
+  .tc{padding:16px 16px 14px;display:flex;flex-direction:column;min-height:250px;position:relative;background:linear-gradient(180deg,rgba(111,138,108,.55),rgba(190,208,186,.55))}
+  .tc h3{font-size:16px;color:#16191a} .tc .sub{font-size:11.5px;color:rgba(22,25,26,.6)}
+  .tc canvas{flex:1;width:100%;min-height:110px;display:block}
+  .arrow{position:absolute;top:12px;right:12px;width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.55);display:flex;align-items:center;justify-content:center;font-size:12px;color:#16191a;text-decoration:none}
+  .chips{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+  .chip{background:rgba(255,255,255,.5);border-radius:10px;padding:5px 8px;font-size:10px;color:rgba(22,25,26,.6)}
+  .chip b{display:block;font:500 12px var(--f-body);color:#16191a;margin-top:1px;white-space:nowrap}
+  .tip{position:absolute;font:500 10px var(--f-body);background:rgba(255,255,255,.85);color:#16191a;padding:3px 9px;border-radius:99px;white-space:nowrap}
+  /* biomarker overview */
+  .bm{grid-column:3/5;padding:16px;display:flex;flex-direction:column}
+  .bm h3{font-size:15px} .bm .sub{font-size:11.5px;color:var(--mute);margin-top:2px}
+  .bm .arrow{background:var(--card)}
+  .bm .row{display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid var(--line);font-size:12.5px}
+  .bm .row:last-child{border-bottom:0}
+  .bm .row small{color:var(--mute);font-size:10px}
+  .st{font:500 10.5px var(--f-body);padding:3px 10px;border-radius:99px;background:rgba(255,255,255,.8);color:#16191a;border:1px solid var(--line);min-width:56px;text-align:center}
+  .st.hi{background:var(--pill);color:var(--page);border-color:var(--pill)}
+  @media (prefers-color-scheme:dark){:root:not([data-theme=light]) .st{background:rgba(255,255,255,.1);color:var(--ink)}}
+  /* bottom row */
+  .sys{grid-column:1/3;padding:16px;position:relative}
+  .rings{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}
+  .ringc{text-align:center;font-size:11px;color:var(--mute)}
+  .ringc svg{width:62px;height:62px;display:block;margin:0 auto 4px}
+  .ringc b{position:absolute}
+  .up{grid-column:3/5;padding:16px;position:relative}
+  .up h3,.sys h3{font-size:15px} .up .sub,.sys .sub{font-size:11.5px;color:var(--mute);margin-top:2px}
+  .upi{padding:10px 0;font-size:12.5px;border-top:1px solid var(--line);margin-top:8px} .upi:first-of-type{margin-top:10px}
+  .upi b{display:block;font-weight:500} .upi span{color:var(--mute);font-size:11px}
+  @media(max-width:1100px){.app{grid-template-columns:1fr;padding:12px}.body{position:static;height:560px}aside:first-child{position:static;height:auto;min-height:0;margin-right:0}nav{display:flex;gap:8px;flex-wrap:wrap}nav a{margin-bottom:0}.side-note{display:none}.main{grid-template-columns:1fr 1fr}.strip{grid-column:1/-1}.bm,.sys,.up{grid-column:1/-1}}
+  @media(min-width:1101px){.main{order:2}.body{order:3}}
+  @media(max-width:700px){.main{grid-template-columns:1fr}.head{flex-direction:column}.nums{grid-template-columns:repeat(2,1fr)}}
 </style>
+</head>
 <body>
-<main>
-  <h1>ALS Clinician Labs <small>research demo</small></h1>
-  <div id="v-labs">
-    <div class="banner"><b>Synthetic patients only.</b> Lab values are compared with research cohorts and generic adult ranges. No blood test diagnoses ALS; this is context for prognosis and monitoring, not a screen. Storage: <b id="lb-store">browser</b>.</div>
-    <div class="card"><div class="row"><label>Patient <select id="lb-pick"></select></label> <button class="sec" id="lb-new">New synthetic patient</button></div>
-      <div id="lb-form" hidden class="row" style="margin-top:8px">
-        <label>Code <input id="lf-code" size="10" value="SYN-NEW"></label><label>Age <input id="lf-age" type="number" value="62" style="width:70px"></label>
-        <label>Sex <select id="lf-sex"><option>F</option><option>M</option></select></label>
-        <label>NfL (log2 NPQ) <input id="lf-nefl" type="number" step="0.1" style="width:80px"></label>
-        <label>Creatinine <input id="lf-creatinine" type="number" step="0.01" style="width:80px"></label><label>CK <input id="lf-ck" type="number" style="width:80px"></label>
-        <label>Albumin <input id="lf-albumin" type="number" step="0.1" style="width:70px"></label><label>Uric acid <input id="lf-uric_acid" type="number" step="0.1" style="width:70px"></label>
-        <label>Bicarb <input id="lf-bicarbonate" type="number" step="0.1" style="width:70px"></label><label>CRP <input id="lf-crp" type="number" step="0.1" style="width:70px"></label>
-        <button id="lf-save">Submit labs</button></div></div>
-    <div class="card" style="margin-top:12px"><h2>Submit a batch (CSV)</h2>
-      <p class="hint">Header: code,age,sex,alsfrs_r,nefl,creatinine,ck,albumin,uric_acid,bicarbonate,crp. Use de-identified codes only; the demo accepts synthetic data only.</p>
-      <textarea id="lb-csv" rows="4" style="width:100%" placeholder="code,age,sex,nefl,creatinine&#10;SYN-900,61,F,14.2,0.7"></textarea>
-      <div class="row"><button id="lb-import">Submit batch</button> <button class="sec" id="lb-export">Download all as CSV</button> <span class="small" id="lb-csvmsg"></span></div></div>
-    <div class="card" id="lb-out" style="margin-top:12px"></div>
-    <div class="card" id="lb-agg" style="margin-top:12px"></div>
-    <div class="card" id="lb-ref" style="margin-top:12px"></div>
-  </div>
+<div class="app">
+  <aside class="side" id="navmount" data-active="overview">
+    <div class="glass side-note"><b>Clinic visit</b><p class="mute" style="margin:6px 0 12px">Speak results to the assistant. It fills the form for you to confirm.</p><button class="btn" id="mic" style="width:100%">Dictate results</button></div>
+  </aside>
 
-</main>
-<script src="supabase-config.js"></script>
-<script src="labs.js"></script>
+  <section class="main">
+    <div class="head"><div><h1>Alex Kim</h1><div class="mute who">Here's Alex's motor summary &middot; 47 &middot; M &middot; ALEX-CASE &middot; <b id="lastvisit"></b></div></div>
+      <div class="acts"><span class="pill warn">ALSFRS-R 32 / 48</span><a class="btn" href="compare.html">Generate report</a></div></div>
+
+    <div class="strip"><div class="nums" id="nums"></div><div style="position:relative"><div class="segs" id="segs"></div></div></div>
+    <div class="glass ai"><h3>AI Insights</h3><div class="orb"></div><p id="aiText"></p></div>
+    <div class="glass score"><h3>Motor Score</h3><div class="big dot" id="score">--</div><div class="of">100</div><span class="pill" id="scoreTag"></span></div>
+
+    <div class="glass tc"><a class="arrow" href="compare.html">&#8599;</a><h3>Grip Trend</h3><div class="sub">Weekly grip strength.</div><canvas id="cGrip"></canvas><div class="chips" id="chGrip"></div></div>
+    <div class="glass tc"><a class="arrow" href="compare.html">&#8599;</a><h3>Speech Rate</h3><div class="sub">Pa-ta-ka syllables per second.</div><canvas id="cSpeech"></canvas><div class="chips" id="chSpeech"></div></div>
+    <div class="glass bm"><div style="display:flex;justify-content:space-between"><div><h3>Biomarker Overview</h3><div class="sub">Motor and lab markers.</div></div></div><div id="bio" style="margin-top:6px"></div></div>
+
+    <div class="glass sys"><h3>Body Systems</h3><div class="sub">How each system is holding up against Alex's own baseline.</div><div class="rings" id="rings"></div></div>
+    <div class="glass up"><h3>Upcoming</h3><div class="sub">Demo reminders.</div><div class="upi"><b>Repeat blood panel</b><span>in 4 weeks &middot; clinic lab</span></div><div class="upi"><b>MRI upload</b><span>pending &middot; imaging centre</span></div></div>
+  </section>
+
+  <section class="glass body">
+    <h3>Body map</h3><div class="mute" style="font-size:13px">Drag to rotate &middot; tap a region</div>
+    <div id="fig"></div>
+    <div class="legend"><span><i style="background:#6fae7c"></i>stable</span><span><i style="background:#c9cfc8;border:1px solid #9aa39a"></i>watch</span><span><i style="background:#d0574b"></i>declining</span></div>
+    <div id="regionPanel" class="mute">Select a region to see what it measures and how it has changed.</div>
+  </section>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/libs/meshopt_decoder.js"></script>
+<script src="nav.js"></script>
+<script src="body3d.js"></script>
+<script src="alex.js"></script>
+<script src="measures.js"></script>
+<script src="console-data.js"></script>
+<script src="dictation.js"></script>
+<script src="companion-api.js"></script>
+<script src="dictate.js"></script>
 <script>
 "use strict";
-const $ = id => document.getElementById(id);
-const esc = t => String(t).replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
-/* ---------- clinician labs ---------- */
-let LB = null, LBP = [];
-async function initLabs(sel) {
-  try {
-    if (!LB) { const [r, p] = await Promise.all([fetch("lab_reference.json").then(x => x.json()), fetch("synthetic_patients.json").then(x => x.json())]); LB = { ref: r, bundled: p };
-      $("lb-ref").innerHTML = `<h2>Reference data</h2><div class="small">${esc(r.source_note)}<br>NfL (log2 NPQ): control mean rises ${r.nefl.ctl_age_slope.toFixed(3)}/year of age; ALS samples average ${r.nefl.als_resid_mean.toFixed(1)} above age-expected (n=${r.nefl.n_als} ALS vs ${r.nefl.n_control} healthy controls). Age-adjusted AUC ${r.nefl.age_adj_auc.toFixed(2)} versus <i>healthy</i> controls only, so it says nothing about other neurological or kidney conditions that also raise NfL. Within ALS, NfL correlates only weakly with ALSFRS-R (rho ${r.nefl.rho_alsfrs.toFixed(2)}). NfL here is relative Olink units, not clinical pg/mL.</div>`; }
-    LBP = await Labs.listPatients(LB.bundled); $("lb-store").textContent = Labs.isRemote() ? "Supabase" : "this browser (set demo/supabase-config.js for Supabase)";
-    $("lb-pick").innerHTML = LBP.map((p, i) => `<option value="${i}">${esc(p.code)} · ${p.age}${p.sex}</option>`).join(""); if (sel != null) $("lb-pick").value = sel; showLabs();
-  } catch (e) { $("lb-out").textContent = "Could not load lab data: " + e.message; }
+const $=id=>document.getElementById(id);
+let A=null;
+function setup(c){const r=devicePixelRatio||1,w=c.clientWidth,h=c.clientHeight;c.width=w*r;c.height=h*r;const g=c.getContext("2d");g.scale(r,r);return{g,w,h}}
+function smooth(g,pts){g.beginPath();g.moveTo(pts[0][0],pts[0][1]);for(let i=1;i<pts.length;i++){const[a,b]=pts[i-1],[c,d]=pts[i],mx=(a+c)/2;g.bezierCurveTo(mx,b,mx,d,c,d)}g.stroke()}
+function drawGrip(){const R=A.series.gripR,L=A.series.gripL,{g,w,h}=setup($("cGrip")),all=[...R,...L],pad=(Math.max(...all)-Math.min(...all))*.1||1,lo=Math.min(...all)-pad,hi=Math.max(...all)+pad,N=Math.max(R.length,L.length),X=i=>8+i*(w-16)/Math.max(1,N-1),Y=v=>h-6-(v-lo)/(hi-lo)*(h-16);
+ g.lineWidth=2.5;g.strokeStyle="rgba(255,255,255,.95)";smooth(g,R.map((v,i)=>[X(i),Y(v)]));
+ g.setLineDash([3,4]);g.lineWidth=2;g.strokeStyle="rgba(255,255,255,.85)";smooth(g,L.map((v,i)=>[X(i),Y(v)]));g.setLineDash([]);
+ g.fillStyle="#fff";g.beginPath();g.arc(X(R.length-1),Y(R[R.length-1]),4,0,7);g.fill()}
+function drawSpeech(){const d=A.series.ddk,{g,w,h}=setup($("cSpeech")),hi=Math.max(...d)*1.05,bw=(w-16)/d.length;
+ d.forEach((v,i)=>{const bh=v/hi*(h-8);g.fillStyle=i===d.length-1?"#fff":"rgba(255,255,255,.55)";const x=8+i*bw+bw*.18,ww=bw*.64,y=h-bh;g.beginPath();g.roundRect?g.roundRect(x,y,ww,bh,4):g.rect(x,y,ww,bh);g.fill()})}
+function drawAll(){if(!A)return;drawGrip();drawSpeech()}
+function render(){
+ $("lastvisit").textContent=`last clinic visit: ${A.visit} · ${A.source==="live"?"live data":"demo data (API not running)"}`;
+ $("aiText").textContent=A.ai.text; $("aiText").title="Source: "+A.ai.by;
+ $("score").textContent=A.score; $("scoreTag").textContent=A.tag;
+ $("nums").innerHTML=A.nums.map(n=>`<div class="num"><span class="pill">${n[3]}</span><div class="v dot">${n[1]}<small>${n[2]}</small></div><div class="l">${n[0]}</div></div>`).join("");
+ {const N=A.weeks,F=4,seg=(k,f)=>`<i class="sg${f?" fut":""}" style="flex-grow:${(f?.9-.1*k:.65+.35*k/Math.max(1,N-1)).toFixed(2)}"></i>`;
+  $("segs").innerHTML=Array.from({length:N-1},(_,k)=>seg(k,false)).join("")+`<div class="cur"><span class="segtag">Week ${N}</span><div><b>${A.score}%</b><small>Motor score vs baseline</small></div><em>${A.score>=90?"→":"↘"}</em></div>`+Array.from({length:F},(_,k)=>seg(k,true)).join("");}
+ $("bio").innerHTML=A.rows.map(r=>`<div class="row"><span>${r[0]}</span><span class="mono">${r[1]} <small>${r[2]}</small></span><span class="st ${r[4]?"hi":""}">${r[3]}</span></div>`).join("");
+ const chip=c=>`<div class="chip">${c[0]}<b>${c[1]}</b></div>`;
+ $("chGrip").innerHTML=A.chips.grip.map(chip).join(""); $("chSpeech").innerHTML=A.chips.speech.map(chip).join("");
+ $("rings").innerHTML=A.rings.map(s=>{const c=2*Math.PI*26,v=Math.max(0,Math.min(100,s[1])),col=v>=90?"#6f8a6c":v>=80?"#8d9a8b":"#d0574b";return `<div class="ringc"><svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="26" fill="none" stroke="rgba(22,25,26,.1)" stroke-width="5"/><circle cx="32" cy="32" r="26" fill="none" stroke="${col}" stroke-width="5" stroke-linecap="round" stroke-dasharray="${c}" stroke-dashoffset="${c*(1-v/100)}" transform="rotate(-90 32 32)"/><text x="32" y="36" text-anchor="middle" font-size="13" font-family="Space Grotesk" fill="currentColor" style="color:var(--ink)">${s[1]}%</text></svg>${s[0]}</div>`}).join("");
+ drawAll(); if(window.V) V.setStatus(A.status);
 }
-function showAgg() {
-  const a = Labs.aggregate(LB.ref, LBP), f = x => isNaN(x) ? "-" : (Math.abs(x) >= 100 ? x.toFixed(0) : x.toFixed(2)), nm = id => id === "nefl" ? "NfL (z vs controls)" : LB.ref.labs.find(l => l.id === id).name;
-  $("lb-agg").innerHTML = `<h2>Aggregate across ${a.n_patients} patients</h2><table><tr><th>Test</th><th>n</th><th>Median (IQR)</th><th>% flagged</th><th>By label (median)</th></tr>` +
-    a.rows.filter(r => r.n > 0 && !Labs.isCamera(r.id)).map(r => `<tr><td>${esc(nm(r.id))}</td><td>${r.n}</td><td>${f(r.median)} (${f(r.q1)}-${f(r.q3)})</td><td>${f(r.pctFlagged)}%</td><td class="small">${Object.entries(r.byLabel).map(([k, v]) => `${esc(k)}: ${f(v.median)} (n=${v.n})`).join("; ")}</td></tr>`).join("") +
-    `</table><p class="small">NfL row shows age-adjusted z; flagged = z of 2 or more. Routine flagged = outside generic range. Synthetic labels exist only for generated patients, and most of the non-NfL values are invented, so differences between labels are not findings.</p>`;
-}
-$("lb-import").onclick = async () => {
-  const { patients, errors } = Labs.parseCsv($("lb-csv").value); let saved = 0;
-  try { for (const p of patients) { await Labs.savePatient(p); saved++; } } catch (e) { errors.push("Save failed: " + e.message); }
-  $("lb-csvmsg").textContent = `${saved} saved` + (errors.length ? "; " + errors.slice(0, 3).join("; ") + (errors.length > 3 ? ` (+${errors.length - 3} more)` : "") : "");
-  if (saved) { await initLabs(); }
-};
-$("lb-export").onclick = () => { const u = URL.createObjectURL(new Blob([Labs.toCsv(LBP)], { type: "text/csv" })), a = document.createElement("a"); a.href = u; a.download = "als_labs_synthetic.csv"; a.click(); URL.revokeObjectURL(u); };
-function cameraHtml(p) {
-  const rows = Labs.cameraRows(p.history), asy = Labs.asymmetry(p.labs || {}), dn = Labs.diurnal(rows);
-  if (!rows.length && !asy.length) return "";
-  const T = { grip: "Fist", foot: "Toe-lift" }, S = { r: "Right", l: "Left" }, U = { grip: "palm lengths", foot: "degrees" }, f = (x, d = 2) => x == null ? "-" : (+x).toFixed(d);
-  let h = "<h2 style='margin-top:14px'>Camera movement tests</h2>";
-  if (rows.length) h += `<table><tr><th>When</th><th>Time of day</th><th>Test</th><th>Rate /s</th><th>Range</th><th>Speed /s</th><th>Change over test</th></tr>` +
-    rows.map(r => `<tr><td>${r.t ? new Date(r.t).toLocaleString() : "-"}</td><td>${esc(r.period || "-")}</td><td>${T[r.kind]} ${S[r.side].toLowerCase()}</td><td>${f(r.rate)}</td><td>${f(r.amp, r.kind === "foot" ? 1 : 2)} ${U[r.kind]}</td><td>${f(r.speed, r.kind === "foot" ? 1 : 2)}</td><td>${r.decrement == null ? "-" : f(r.decrement, 0) + "%"}</td></tr>`).join("") + "</table>";
-  if (dn.length) h += "<p><b>Morning versus later in the day</b> (latest of each)</p><ul>" + dn.map(d => `<li>${T[d.kind]} ${S[d.side].toLowerCase()}: range ${f(d.ampChange, 0)}%, speed ${f(d.speedChange, 0)}%</li>`).join("") + "</ul>";
-  if (asy.length) h += `<p><b>Right versus left</b></p><table><tr><th>Measure</th><th>Right</th><th>Left</th><th>Right / left</th></tr>` + asy.map(a => `<tr><td>${esc(a.name)}</td><td>${f(a.r)}</td><td>${f(a.l)}</td><td>${f(a.ratio)}</td></tr>`).join("") + "</table>";
-  return h + `<p class="small">Camera tests are movement proxies from a phone or webcam, not force and not validated against a dynamometer. They have no reference range; compare a person with their own earlier results, same hand or foot, same setup. Time of day comes from the device clock when the test was taken.</p>`;
-}
-function showLabs() {
-  showAgg(); const p = LBP[+$("lb-pick").value]; if (!p) return; const rs = Labs.scorePatient(LB.ref, p).filter(r => !Labs.isCamera(r.analyte));
-  const row = r => r.analyte === "nefl"
-    ? `<tr><td>NfL</td><td>${r.value.toFixed(2)} (expected ${r.expected.toFixed(2)} for age ${p.age})</td><td class="${r.flag ? "bad" : ""}">z ${r.z.toFixed(1)}: ${r.band}. Above ${r.pctControls.toFixed(0)}% of controls and ${r.pctAls.toFixed(0)}% of ALS samples (age-adjusted)</td></tr>`
-    : `<tr><td>${esc(r.name)}</td><td>${r.value} ${r.unit} ${r.lo == null ? "" : `(ref ${r.lo}-${r.hi})`}</td><td>${r.flag}. <span class="small">ALS context: ${esc(r.als)}. ${esc(r.note)}.</span></td></tr>`;
-  $("lb-out").innerHTML = `<h2>${esc(p.code)} <span class="small">age ${p.age}, ${p.sex}${p.alsfrs_r != null ? ", ALSFRS-R " + p.alsfrs_r : ""} · synthetic${p.label ? " (" + esc(p.label) + ")" : ""}</span></h2>
-    <table><tr><th>Test</th><th>Value</th><th>Interpretation</th></tr>${rs.map(row).join("")}</table>${cameraHtml(p)}
-    <p class="small">Synthetic ${p.label || ""} patient generated from cohort distributions. Not a diagnosis; flagged values need clinician review.</p>`;
-}
-$("lb-pick").onchange = showLabs;
-$("lb-new").onclick = () => { $("lb-form").hidden = !$("lb-form").hidden; };
-$("lf-save").onclick = async () => {
-  const labs = {}; ["nefl", "creatinine", "ck", "albumin", "uric_acid", "bicarbonate", "crp"].forEach(k => { const v = $("lf-" + k).value; if (v !== "") labs[k] = +v; });
-  const p = { code: $("lf-code").value.trim(), age: +$("lf-age").value, sex: $("lf-sex").value, labs };
-  if (!p.code || !p.age || !Object.keys(labs).length) { alert("Need a code, age, and at least one lab value."); return; }
-  try { await Labs.savePatient(p); await initLabs(); const i = LBP.findIndex(x => x.code === p.code); $("lb-pick").value = i; showLabs(); } catch (e) { alert("Save failed: " + e.message); }
-};
-
-initLabs();
+addEventListener("resize",drawAll);
+window.V=BodyViewer.mount($("fig"),{onSelect:r=>{$("regionPanel").innerHTML=r&&A?`<b>${BodyViewer.REGIONS[r]}</b><br>${A.regionText[r]}`:'<span class="mute">Select a region...</span>'}});
+const PATIENT=new URLSearchParams(location.search).get("patient")||"ALEX-CASE";
+function refresh(){return ConsoleData.load(PATIENT,ai=>{if(A){A.ai=ai;$("aiText").textContent=ai.text;$("aiText").title="Source: "+ai.by}}).then(d=>{A=d;render()})}
+refresh();
+$("mic").onclick=()=>Dictate.open({patient:PATIENT,onSaved:refresh});
 </script>
 </body>
 </html>

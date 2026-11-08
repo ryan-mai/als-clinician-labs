@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Data Engine - NeuroMotion</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500&family=Doto:wght@700&family=Space+Grotesk:wght@500;600&display=swap">
+<link rel="stylesheet" href="theme.css">
+<style>
+  .wrap{max-width:1100px;margin:0 auto;padding:20px 20px 50px;min-width:0}
+  .head{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap}
+  h1{font-size:32px;margin:6px 0 2px} .sub{color:var(--mute);font-size:14px;max-width:640px}
+  .card{padding:20px 24px;margin-top:16px}
+  .banner{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+  .badge{display:inline-flex;align-items:center;gap:8px;padding:6px 14px;border-radius:99px;font:500 13px var(--f-body);background:var(--pill);color:var(--page)} .badge i{width:8px;height:8px;border-radius:50%;background:#6fae7c}
+  .badge.local{background:var(--sage-l);color:var(--ink)} .badge.local i{background:#d9a23a}
+  .chips{display:flex;gap:8px;flex-wrap:wrap} .chip{padding:4px 12px;border-radius:99px;font:500 12px var(--f-body);background:var(--sage-l);color:var(--sage-d)} .chip.off{background:transparent;border:1px dashed var(--line);color:var(--mute)}
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-top:16px}
+  .stat{padding:18px 20px} .stat .l{font:500 11px var(--f-mono);letter-spacing:.07em;text-transform:uppercase;color:var(--mute)} .stat .v{font-size:38px;line-height:1.1;margin:8px 0 2px} .stat .s{font-size:12.5px;color:var(--mute)}
+  h3{font-size:17px} .note{font-size:13px;color:var(--mute);line-height:1.5;margin:4px 0 10px}
+  .bar{display:grid;grid-template-columns:150px 1fr 90px;gap:12px;align-items:center;margin:10px 0;font-size:13px} .bar .t{height:16px;border-radius:8px;background:var(--line);overflow:hidden} .bar .t i{display:block;height:100%;border-radius:8px} .bar b{font:500 15px var(--f-head);text-align:right}
+  .big{font-size:46px;line-height:1} .big small{font:400 14px var(--f-body);color:var(--mute);margin-left:6px}
+  pre{background:rgba(255,255,255,.55);border:1px solid var(--glass-line);border-radius:16px;padding:14px 16px;font:12px/1.55 var(--f-mono);overflow:auto;margin:8px 0 0;white-space:pre}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px} @media(max-width:850px){.grid2{grid-template-columns:1fr}.bar{grid-template-columns:110px 1fr 76px}}
+  ol.how{margin:8px 0 0;padding-left:20px;font-size:14px;line-height:1.7} ol.how code{font:12px var(--f-mono);background:rgba(255,255,255,.6);padding:1px 6px;border-radius:6px}
+  .err{color:var(--bad)}
+</style>
+</head>
+<body>
+<div class="shell"><aside class="side" id="navmount" data-active="engine"></aside>
+<div class="wrap">
+  <div class="head"><div><h1>Data engine</h1><div class="sub">Every reading from the companion and the clinic is stored as time-series data. This page shows how it is stored and how fast it can be asked questions.</div></div><button class="btn ghost" id="refresh">Refresh</button></div>
+  <div class="glass card banner" id="banner">Loading...</div>
+  <div class="stats" id="stats"></div>
+  <div id="more"></div>
+</div>
+</div>
+<script src="nav.js"></script>
+<script>
+"use strict";
+const $=id=>document.getElementById(id), esc=t=>String(t).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const n0=x=>Number(x).toLocaleString("en-US"), mb=b=>b>=1e9?(b/1e9).toFixed(2)+" GB":(b/1e6).toFixed(b>=1e7?0:1)+" MB";
+const SQL=`-- readings: one row per measurement, partitioned by time
+CREATE TABLE measurements (t timestamptz, patient text, metric text, value double precision, ...);
+SELECT create_hypertable('measurements', 't', chunk_time_interval => INTERVAL '7 days');
+
+-- older chunks are compressed, grouped by patient and metric
+ALTER TABLE measurements SET (timescaledb.compress, timescaledb.compress_segmentby = 'patient, metric');
+SELECT add_compression_policy('measurements', INTERVAL '14 days');
+
+-- weekly roll-up, kept up to date automatically; the charts read this, not the raw rows
+CREATE MATERIALIZED VIEW weekly_metric WITH (timescaledb.continuous) AS
+  SELECT time_bucket(INTERVAL '7 days', t) AS week, patient, metric,
+         avg(value), min(value), max(value), count(*), first(value, t), last(value, t)
+  FROM measurements GROUP BY week, patient, metric;`;
+function chip(on,label){return`<span class="chip${on?"":" off"}">${on?"&#10003; ":""}${esc(label)}</span>`}
+async function load(){
+  $("banner").textContent="Loading..."; let e;
+  try{const r=await fetch("/api/engine");if(!r.ok)throw new Error((await r.json().catch(()=>({}))).error||"HTTP "+r.status);e=await r.json()}
+  catch(err){$("banner").innerHTML=`<span class="err">Could not load the data engine: ${esc(err.message)}. Open this page through the server (node server.js).</span>`;$("stats").innerHTML="";$("more").innerHTML="";return}
+  if(e.backend==="json"){
+    $("banner").innerHTML=`<span class="badge local"><i></i>Local JSON file</span><span class="sub" style="margin:0">Readings are stored in a file on this computer.</span>`;
+    $("stats").innerHTML=`<div class="glass stat"><div class="l">Readings</div><div class="v dot">${n0(e.rows)}</div><div class="s">stored</div></div><div class="glass stat"><div class="l">Patients</div><div class="v dot">${n0(e.patients)}</div><div class="s">with readings</div></div>`;
+    $("more").innerHTML=`<div class="glass card"><h3>Switch to Tiger Data</h3><p class="note">Tiger Data is managed Postgres with TimescaleDB, built for time-series data like these readings.</p><ol class="how"><li>Create a Tiger Cloud service (the free plan is enough) and copy its connection string.</li><li>Add <code>DATABASE_URL=...</code> to <code>clinician_labs/.env</code> and restart the server.</li><li>Run <code>npm run db:check</code> to confirm, then <code>npm run db:seed</code> to load a large synthetic cohort.</li></ol></div><div class="glass card"><h3>What it sets up</h3><pre>${esc(SQL)}</pre></div>`;
+    return;
+  }
+  const c=e.capabilities||{};
+  $("banner").innerHTML=`<span class="badge"><i></i>Tiger Data</span><div class="chips">${chip(c.hypertable,"Hypertable")}${chip(c.compression,"Compression")}${chip(c.cagg,"Continuous aggregate")}</div>${c.hypertable?"":`<span class="sub" style="margin:0">Running as plain Postgres: TimescaleDB features are not available on this database.</span>`}`;
+  const ch=e.chunks, cp=e.compression;
+  $("stats").innerHTML=
+    `<div class="glass stat"><div class="l">Readings</div><div class="v dot">${n0(e.rows)}</div><div class="s">${n0(e.patients)} patients</div></div>`+
+    (ch?`<div class="glass stat"><div class="l">Time chunks</div><div class="v dot">${n0(ch.total)}</div><div class="s">${n0(ch.compressed)} compressed</div></div>`:"")+
+    (e.sizeBytes?`<div class="glass stat"><div class="l">Storage</div><div class="v dot">${mb(e.sizeBytes)}</div><div class="s">${cp?`compressed data is ${cp.ratio}x smaller`:"on disk"}</div></div>`:"")+
+    (cp?`<div class="glass stat"><div class="l">Compression</div><div class="v dot">${cp.ratio}x</div><div class="s">${mb(cp.beforeBytes)} to ${mb(cp.afterBytes)} (older chunks)</div></div>`:"");
+  let more="";
+  if(e.bench){const b=e.bench,mx=Math.max(b.rawMs,b.aggMs,.01),pw=x=>Math.max(2,Math.round(100*x/mx));
+    more+=`<div class="grid2"><div class="glass card"><h3>Same question, two ways</h3><p class="note">&ldquo;${esc(b.question)}&rdquo; (${n0(b.buckets)} weekly values), run live against the database just now. Times are measured ${esc(b.measured||"inside the database")}.</p>
+      <div class="bar"><span>Raw readings</span><div class="t"><i style="width:${pw(b.rawMs)}%;background:var(--bad)"></i></div><b>${b.rawMs} ms</b></div>
+      <div class="bar"><span>Continuous aggregate</span><div class="t"><i style="width:${pw(b.aggMs)}%;background:var(--ok)"></i></div><b>${b.aggMs} ms</b></div>
+      <div class="big dot">${b.speedup?b.speedup+"x":"-"}<small>${b.speedup?"faster from the weekly roll-up":""}</small></div><p class="note" style="margin-top:8px">The gap grows with the number of readings, because the roll-up stays small while the raw table keeps growing.</p></div>`;
+    const s=e.screen; more+=s?`<div class="glass card"><h3>Cohort screen</h3><p class="note">A population question a clinic would ask: how many patients are getting worse?</p><div class="big dot">${n0(s.declining)}<small>of ${n0(s.patients)} patients</small></div><p class="note" style="margin-top:10px">Rule: ${esc(s.rule)} (${esc(s.metric)}). Answered from the weekly roll-up in <b>${s.ms} ms</b> of database time.</p></div></div>`:`</div>`;}
+  else if(c.hypertable){more+=`<div class="glass card"><h3>Benchmark</h3><p class="note">Add a larger dataset to see the benchmark: run <code>npm run db:seed</code> (about 770,000 synthetic readings), then refresh this page.</p></div>`}
+  more+=`<div class="glass card"><h3>How it is set up</h3><pre>${esc(SQL)}</pre><p class="note" style="margin-top:10px">The patient trend charts, the motor score history and the cohort screen all read from the weekly roll-up. New readings appear immediately because the aggregate also includes data it has not refreshed yet (real-time aggregation).</p></div>`;
+  $("more").innerHTML=more;
+}
+$("refresh").onclick=load; load();
+</script>
+</body>
+</html>

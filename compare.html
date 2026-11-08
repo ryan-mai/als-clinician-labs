@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Doctor Report - NeuroMotion</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500&family=Doto:wght@700&family=Space+Grotesk:wght@500;600&display=swap">
+<link rel="stylesheet" href="theme.css">
+<style>
+  .wrap{max-width:1180px;margin:0 auto;padding:20px 20px 50px;min-width:0}
+  .head{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap}
+  .head .acts{display:flex;gap:10px;flex-wrap:wrap}
+  h1{font-size:32px;margin:6px 0 2px} .sub{color:var(--mute);font-size:14px}
+  .card{padding:20px 24px;margin-top:16px}
+  .note{font-size:13px;color:var(--mute);margin:4px 0 8px;line-height:1.5}
+  /* row 1: evidence, full width */
+  .evi{display:grid;grid-template-columns:minmax(0,300px) minmax(0,1fr);gap:32px;align-items:center}
+  .big{font-size:60px;line-height:1} .big small{font:400 15px/1.3 var(--f-body);color:var(--mute);display:block;margin-top:8px;max-width:270px}
+  .stack{display:flex;height:16px;border-radius:8px;overflow:hidden;background:var(--line);margin:4px 0 10px}
+  .stack i{display:block;height:100%} .legend{display:flex;gap:18px;flex-wrap:wrap;font-size:12px;color:var(--mute)} .legend b{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:-1px}
+  @media(max-width:800px){.evi{grid-template-columns:1fr;gap:14px}}
+  /* row 2: upload + tall rule-out card */
+  .row2{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:16px;align-items:stretch;margin-top:16px} @media(max-width:900px){.row2{grid-template-columns:1fr}}
+  .row2 .card{margin-top:0}
+  #up{display:flex;flex-direction:column} #up .drop{flex:1;min-height:130px}
+  .drop{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:6px;padding:16px 16px;border:2px dashed var(--line);border-radius:22px;cursor:pointer;background:rgba(255,255,255,.35);transition:.15s}
+  .drop:hover,.drop.over{border-color:var(--sage-d);background:rgba(255,255,255,.6)}
+  .drop .ic{width:42px;height:42px;border-radius:14px;background:var(--card-solid,#f4f6f3);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;margin-bottom:4px;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+  .drop b{font:600 16px var(--f-head)} .drop span{font-size:13px;color:var(--mute)}
+  .rev{margin-top:16px;display:none} .rev.on{display:block}
+  .rev table{width:100%;border-collapse:collapse;font-size:14px} .rev td{padding:8px 4px;border-bottom:1px solid var(--line)} .rev input{width:92px;font:inherit;color:var(--ink);background:rgba(255,255,255,.7);border:1px solid var(--line);border-radius:10px;padding:6px 8px}
+  .rev .x{background:none;border:0;color:var(--mute);cursor:pointer;font-size:16px}
+  .st{font-size:13px;color:var(--mute);margin-top:8px;min-height:1.3em} .st.ok{color:var(--ok)} .st.bad{color:var(--bad)}
+  /* markers: flip tiles (click to turn over) */
+  .tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));grid-auto-rows:auto;gap:14px;margin-top:12px}
+  .tile{perspective:1000px;cursor:pointer;border-radius:16px;outline:none;transition:transform .2s ease,filter .2s ease}
+  .tile:hover{transform:translateY(-3px)} .tile:focus-visible{box-shadow:0 0 0 3px var(--sage-d)}
+  .ti{position:relative;display:grid;width:100%;height:100%;transition:transform .6s cubic-bezier(.4,.2,.2,1);transform-style:preserve-3d}
+  .tile.flip .ti{transform:rotateY(180deg)}
+  .face{grid-area:1/1;position:relative;min-width:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:16px;padding:12px 14px;background:rgba(255,255,255,.58);border:1px solid var(--glass-line);border-left:4px solid var(--line);overflow:hidden;box-shadow:0 4px 14px rgba(60,80,60,.08)}
+  .face.bk{transform:rotateY(180deg);background:var(--card-solid,#f4f6f3);overflow:hidden;padding:12px 14px 10px}
+  .tile.bad .face{border-left-color:var(--bad)} .tile.warn .face{border-left-color:#d9a23a} .tile.ok .face{border-left-color:var(--ok)} .tile.neutral .face{border-left-color:var(--mute)}
+  .tile.nodata .face.ft{opacity:.62;border-style:dashed;border-left-style:dashed}
+  .t-cat{font:500 9px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--mute);margin-bottom:3px}
+  .t-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px} .t-name{font:500 13px/1.3 var(--f-body)}
+  .pl{flex-shrink:0;padding:2px 10px;border-radius:99px;font:500 11px var(--f-body);background:rgba(255,255,255,.9);color:#16191a;border:1px solid var(--line)} .pl.dark{background:var(--pill);color:var(--page);border-color:var(--pill)}
+  .t-val{font:500 22px var(--f-head);margin-top:8px;white-space:nowrap} .t-val small{font:400 11px var(--f-body);color:var(--mute);margin-left:4px} .t-rl{font:400 9.5px var(--f-mono);letter-spacing:.05em;color:var(--mute)}
+  .t-txt{font-size:13px;margin-top:10px;color:var(--ink);line-height:1.35} .t-hint{position:absolute;right:12px;bottom:8px;font:400 9.5px var(--f-mono);letter-spacing:.05em;color:var(--mute);opacity:.8}
+  .face.bk{padding:10px 12px 8px}
+  .bk-h{font:600 12.5px/1.25 var(--f-head);margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .bk-why{font-size:11px;line-height:1.35;color:var(--mute);margin:0 0 5px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .bk-r{font-size:11px;line-height:1.45;display:flex;gap:6px;align-items:center;min-width:0} .bk-r span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0} .bk-r i{display:inline-block;width:8px;height:8px;border-radius:50%;flex-shrink:0} .bk-r i.c{background:rgba(111,174,124,.95)} .bk-r i.a{background:rgba(208,87,75,.9)}
+  .bk-c{font-size:11px;margin-top:5px;padding-top:5px;border-top:1px solid var(--line);line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden} .bk-f{font-size:10px;color:var(--warn);margin-top:2px;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  /* card pile for markers without a result yet: sits in the grid like a tile, back cards peek out top-right */
+  .deck-cell{min-width:0;min-height:150px}
+  .deck{position:relative;width:100%;height:100%;cursor:pointer;outline:none;border-radius:16px}
+  .deck:focus-visible{box-shadow:0 0 0 3px var(--sage-d)}
+  .dk{position:absolute;left:0;bottom:0;width:calc(100% - 24px);height:calc(100% - 24px);background:var(--bg);color:#16191a;border-radius:16px;padding:11px 14px;overflow:hidden;box-shadow:0 5px 16px rgba(40,60,40,.16);transform-origin:bottom left;transition:transform .55s cubic-bezier(.4,.2,.2,1),opacity .4s ease}
+  .dk>*{transition:opacity .25s ease}
+  .dk[data-r="0"]{transform:none;z-index:9;opacity:1}
+  .dk[data-r="1"]{transform:translate(12px,-12px);z-index:8;opacity:1}
+  .dk[data-r="2"]{transform:translate(24px,-24px);z-index:7;opacity:1}
+  .dk:not([data-r="0"]):not([data-r="1"]):not([data-r="2"]){transform:translate(24px,-24px);z-index:1;opacity:0}
+  .dk:not([data-r="0"])>*{opacity:0}
+  .deck:hover .dk[data-r="1"]{transform:translate(15px,-15px)} .deck:hover .dk[data-r="2"]{transform:translate(30px,-30px)}
+  .dk .t-cat{color:rgba(22,25,26,.6)} .dk .pl{background:rgba(255,255,255,.75);border-color:transparent}
+  .dk-b{margin-top:5px;font-size:11px;line-height:1.4} .dk-b .bk-why{margin:0 0 4px;color:rgba(22,25,26,.7);-webkit-line-clamp:1} .dk-b .bk-r{color:#16191a;font-size:10.5px;line-height:1.35}
+  .dk-n{position:absolute;left:14px;bottom:8px;font:400 9.5px var(--f-mono);letter-spacing:.05em;color:rgba(22,25,26,.6)}
+  @media (prefers-reduced-motion:reduce){.dk{transition:none}}
+  /* compact first screen */
+  .big{font-size:50px} .evi{padding:16px 24px} .evi .stack{height:14px}
+  .rule h3{font-size:16px} .rule .note{margin:2px 0 4px}
+  .rule .it{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:8px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line);font-size:12px;line-height:1.45}
+  .rule .it:last-of-type{border-bottom:0} .rule .it b{font-weight:500;font-size:13.5px;margin:0} .rule .it .tag{margin:0;padding:2px 10px;font-size:11px} .rule .it .say{grid-column:1/-1;margin-top:3px}
+  #up .drop{min-height:96px;padding:12px}
+  @media (prefers-reduced-motion:reduce){.ti,.tile{transition:none}}
+  .rb{position:relative;height:22px;margin-top:6px} .rb .tr{position:absolute;left:0;right:0;top:9px;height:4px;border-radius:2px;background:var(--line)}
+  .rb .bc,.rb .ba{position:absolute;top:6px;height:10px;border-radius:4px} .rb .bc{background:rgba(111,174,124,.55)} .rb .ba{background:rgba(208,87,75,.5)}
+  .rb .pt{width:4px!important;border-radius:2px;top:4px!important;height:14px!important}
+  .rb .al,.rb .al2{position:absolute;top:3px;width:16px;height:16px;border-radius:50%;transform:translateX(-8px);border:3px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.35)} .rb .al{background:var(--pill)} .rb .al2{background:var(--card-solid,#f4f6f3);border-color:var(--pill);width:10px;height:10px;top:6px;transform:translateX(-5px);opacity:.8}
+  .rb .cut{position:absolute;top:1px;bottom:1px;border-left:2px dashed var(--mute)}
+  .key{display:flex;gap:18px;font-size:12px;color:var(--mute);margin-top:14px;flex-wrap:wrap} .key i{display:inline-block;width:16px;height:8px;border-radius:3px;margin-right:6px;vertical-align:middle}
+  .tag{display:inline-block;padding:3px 11px;border-radius:99px;font:500 12px var(--f-body);white-space:nowrap}
+  .tag.neutral,.tag.none{background:var(--sage-l);color:var(--mute)}
+  .fine{font-size:12px;color:var(--mute);line-height:1.55;margin-top:18px}
+  #apa{display:none}
+  /* ============ print: formal APA-style document ============ */
+  @page{size:Letter;margin:1in;@top-right{content:counter(page);font:12pt "Times New Roman",Times,serif}}
+  @media print{
+    html,body{background:#fff!important;color:#000}
+    .shell>.side,.wrap>*:not(#apa){display:none!important}
+    .shell{display:block;padding:0;max-width:none} .wrap{max-width:none;padding:0;margin:0}
+    #apa{display:block;font:12pt/2 "Times New Roman",Times,serif;color:#000}
+    #apa h1{font:700 12pt/2 "Times New Roman",Times,serif;text-align:center;margin:0}
+    #apa h2{font:700 12pt/2 "Times New Roman",Times,serif;text-align:center;margin:0;break-after:avoid}
+    #apa h3{font:700 12pt/2 "Times New Roman",Times,serif;text-align:left;margin:0;break-after:avoid}
+    #apa p{margin:0;text-indent:.5in;text-align:left} #apa p.ni{text-indent:0}
+    #apa .tb{text-align:center;margin-bottom:.4in}
+    #apa .tb p{text-indent:0;text-align:center}
+    #apa .abs p{text-indent:0}
+    #apa .kw{text-indent:.5in}
+    #apa .tbl{break-inside:avoid}
+    #apa .tn{font-weight:700;margin-top:.15in;break-after:avoid;line-height:1.5} #apa .tt{font-style:italic;margin-bottom:.06in;break-after:avoid;line-height:1.5}
+    #apa table{width:100%;border-collapse:collapse;font-size:10pt;line-height:1.35;border-top:1pt solid #000;border-bottom:1pt solid #000;break-inside:avoid}
+    #apa th{font-weight:400;font-style:normal;text-align:left;padding:4pt 6pt;border-bottom:.75pt solid #000;vertical-align:bottom}
+    #apa td{padding:3.5pt 6pt;vertical-align:top;border:0}
+    #apa td.n,#apa th.n{text-align:right;white-space:nowrap}
+    #apa .tnote{font-size:10pt;line-height:1.4;text-indent:0;margin-top:.05in;margin-bottom:.15in}
+    #apa .tnote i{font-style:italic}
+    #apa .refs p{padding-left:.5in;text-indent:-.5in}
+    #apa .pb{break-before:page}
+    #apa sup{font-size:8pt;line-height:0}
+  }
+</style>
+</head>
+<body>
+<div class="shell"><aside class="side" id="navmount" data-active="report"></aside>
+<div class="wrap">
+  <div class="head"><div><h1>Doctor report</h1><div class="sub" id="who">Loading...</div></div>
+    <div class="acts"><button class="btn ghost" id="copy-sum">Copy summary</button><button class="btn ghost" id="copy-tbl">Copy results table</button><button class="btn" onclick="window.print()">Download Report</button></div></div>
+  <div class="st" id="copy-st" style="margin-top:4px"></div>
+
+  <div class="glass card evi" id="evi"></div>
+
+  <div class="row2">
+    <div class="glass card" id="up">
+      <h3 style="font-size:16px">Add results</h3>
+      <p class="note" style="margin-top:2px">We read the values, you check them, and the report updates.</p>
+      <label class="drop" id="drop" for="file"><span class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 18a4 4 0 0 1-.6-7.96A5.5 5.5 0 0 1 17 8.5a4.5 4.5 0 0 1 .5 9H17"/><path d="M12 12v8M9 15l3-3 3 3"/></svg></span><b>Upload a results file</b><span>or, click to browse (CSV, JSON, text, image or PDF &middot; 4 MB max)</span></label>
+      <input type="file" id="file" hidden accept=".csv,.tsv,.json,.txt,.md,image/png,image/jpeg,image/webp,application/pdf">
+      <p class="note" style="margin-top:8px;font-size:12px">CSV, JSON and text are read on this computer. Photos and PDFs are read by Gemini (Google): use synthetic or de-identified files only.</p>
+      <div class="st" id="up-st"></div>
+      <div class="rev" id="rev"><h4 style="font:500 12px var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--mute);margin:6px 0">Found in the file</h4><table id="rev-t"></table><div class="note" id="rev-skip"></div>
+        <div style="display:flex;gap:10px;margin-top:12px;justify-content:flex-end"><button class="btn ghost" id="rev-cancel">Cancel</button><button class="btn" id="rev-save">Update results</button></div></div>
+    </div>
+    <div class="glass card rule" id="rule"></div>
+  </div>
+
+  <div class="glass card" id="marks"></div>
+  <p class="fine" id="fine"></p>
+
+  <article id="apa" aria-label="Report document"></article>
+</div>
+</div>
+<script src="nav.js"></script>
+<script src="measures.js"></script>
+<script src="dictation.js"></script>
+<script src="labfile.js"></script>
+<script src="companion-api.js"></script>
+<script src="reference.js"></script>
+<script>
+"use strict";
+const $=id=>document.getElementById(id), esc=t=>String(t).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const PATIENT=new URLSearchParams(location.search).get("patient")||"ALEX-CASE";
+const META={"ALEX-CASE":{who:"a 47-year-old man",fict:true}};
+// Fallback = the case-file column of the source table (used when the API is not running)
+const STATIC={grip_kg_r:14,grip_kg_l:32,pinch_kg_r:3,pinch_kg_l:8,speech_wpm:142,nfl_pgml:88,ck:470,walk10m_s:14.2,snip_cmh2o:52,fvc_sit_pct:78,fvc_sup_pct:64};
+let current=null;
+async function getValues(){
+  try{const r=await fetch("/api/summary?patient="+encodeURIComponent(PATIENT));if(!r.ok)throw 0;const s=await r.json();const v={};for(const[k,m]of Object.entries(s.metrics))v[k]=m.last;if(!Object.keys(v).length)throw 0;return{values:v,metrics:s.metrics,live:true}}
+  catch(e){return{values:{...STATIC},metrics:null,live:false}}
+}
+const fmt=x=>x==null?"-":Math.abs(x)>=100?Math.round(x):+(+x).toFixed(Math.abs(x)<1?3:1);
+const M=()=>Measures.METRICS, lab=k=>M()[k].label+(/_r$/.test(k)?" (right)":/_l$/.test(k)?" (left)":"");
+const today=new Date(), dateLong=today.toLocaleDateString("en-US",{year:"numeric",month:"long",day:"numeric"});
+function bar(row){
+  const [a0,a1]=row.axis,pos=v=>Math.max(0,Math.min(100,(v-a0)/(a1-a0)*100)),b=(x,cls)=>{ if(!x||(x.lo==null&&x.v==null))return"";
+    if(x.v!=null)return`<div class="${cls} pt" style="left:calc(${pos(x.v)}% - 2px)"></div>`; const l=pos(x.lo),h=pos(x.hi);return`<div class="${cls}" style="left:${l}%;width:${Math.max(1,h-l)}%"></div>`};
+  const vals=(row.shown||[]).filter(v=>v!=null),main=row.value;
+  let m="";for(const v of vals){ if(v===main)continue; m+=`<div class="al2" style="left:${pos(v)}%" title="${fmt(v)}"></div>`}
+  if(main!=null)m+=`<div class="al" style="left:${pos(main)}%" title="${fmt(main)}"></div>`;
+  const cut=row.cutoff!=null?`<div class="cut" style="left:${pos(row.cutoff)}%" title="cut-off ${row.cutoff}"></div>`:"";
+  return`<div class="rb"><div class="tr"></div>${b(row.control,"bc")}${b(row.als,"ba")}${cut}${m}</div>`;
+}
+function caseText(row,sep=", "){ // case value for text/tables: "14 (R), 32 (L)" or "88"
+  if(row.value==null)return"—"; const two=row.metrics&&row.metrics.length>1&&row.shown.length>1&&row.shown.every(v=>v!=null);
+  return two?`${fmt(row.shown[0])} (R)${sep}${fmt(row.shown[1])} (L)`:fmt(row.value);
+}
+/* ---------------- screen ---------------- */
+function renderScreen(d,E){
+  const S=E.summary, toward=S.inAls+S.towardAls, w=n=>S.measured?100*n/S.measured:0;
+  $("who").innerHTML=`${esc(PATIENT)} &middot; ${d.live?"live data":"case-file values (API not running)"} &middot; ${esc(dateLong)}`;
+  $("evi").innerHTML=`<div class="big dot">${toward} of ${S.measured}<small>measured markers are in or toward the ALS range</small></div>
+   <div><div class="stack"><i style="width:${w(S.inAls)}%;background:var(--bad)"></i><i style="width:${w(S.towardAls)}%;background:var(--warn)"></i><i style="width:${w(S.beyond)}%;background:#e3b45a"></i><i style="width:${w(S.overlap)}%;background:var(--mute)"></i><i style="width:${w(S.control)}%;background:var(--ok)"></i></div>
+   <div class="legend"><span><b style="background:var(--bad)"></b>In ALS range ${S.inAls}</span><span><b style="background:var(--warn)"></b>Toward ALS ${S.towardAls}</span><span><b style="background:#e3b45a"></b>Beyond both ${S.beyond}</span><span><b style="background:var(--mute)"></b>Overlap ${S.overlap}</span><span><b style="background:var(--ok)"></b>Control range ${S.control}</span></div>
+   <p class="note" style="margin:10px 0 0">${S.measured} of ${S.total} comparable markers have a value. Not yet measured: ${S.notMeasured.length?esc(S.notMeasured.join(", ")):"none"}.</p></div>`;
+  const rs=Reference.SECTIONS.find(s=>s.id==="rule");
+  $("rule").innerHTML=`<h3>Rule-outs and pending tests</h3><p class="note">Rule out Parkinson's, MS and other conditions.</p>`+rs.qualitative.filter(r=>!r.tileOnly).map(r=>`<div class="it"><b>${esc(r.name.split(/[(:]/)[0].trim())}</b><span class="tag ${r.alex?"neutral":"none"}">${r.alex?"Negative":"Pending"}</span><div class="say mute">${esc(r.alex?r.alex+". "+r.say:r.say.replace(/^Pending\.\s*/,""))}</div></div>`).join("");
+  /* tiles: every marker in the source table, ordered by importance (abnormal first, then strongest ALS biomarkers first).
+     Markers with a result are flip tiles; markers without one go in a stack of cards underneath. */
+  const ruleQ=Reference.SECTIONS.find(s=>s.id==="rule").qualitative;
+  const unitOf=r=>r.unit&&r.unit!=="%"?` ${r.unit}`:r.unit||"";
+  const backRow=(r,nodata)=>`<div class="bk-h">${esc(r.name)}</div><p class="bk-why">${esc(r.why)}</p>
+      <div class="bk-r"><i class="c"></i><span><b>Control:</b> ${esc(r.control.text||"-")}</span></div><div class="bk-r"><i class="a"></i><span><b>ALS:</b> ${esc(r.als.text||"-")}</span></div>
+      <div class="bk-c"><b>This person:</b> ${nodata?"not measured yet":esc(caseText(r))+esc(unitOf(r))+" &middot; "+esc(r.placed.label)}</div>${r.confirm&&!nodata?`<div class="bk-f">Table reading needs confirming.</div>`:""}`;
+  const rowItem=(r,cat)=>{
+    const p=Reference.pill(r),two=r.metrics&&r.metrics.length>1&&r.shown.length>1&&r.shown.every(v=>v!=null),nodata=r.value==null,info=!!r.info;
+    const val=two?`${fmt(r.shown[0])} / ${fmt(r.shown[1])}`:fmt(r.value), key=Reference.rank(r.placed.state,r.weight);
+    if(nodata)return{key,nodata:true,name:r.name,cat,pill:p.text,back:`<p class="bk-why" style="margin-top:0">${esc(r.why)}</p><div class="bk-r"><i class="c"></i><span><b>Control:</b> ${esc(r.control.text||"-")}</span></div><div class="bk-r"><i class="a"></i><span><b>ALS:</b> ${esc(r.als.text||"-")}</span></div>`};
+    const front=`<div class="t-val">${val}<small>${esc(r.unit)}</small></div>${two?`<div class="t-rl">RIGHT / LEFT</div>`:""}${info?"":bar(r)}`;
+    return{key,html:`<div class="tile ${r.placed.tone}" tabindex="0" role="button" aria-pressed="false" aria-label="${esc(r.name)}: click for details"><div class="ti"><div class="face ft"><div class="t-cat">${esc(cat)}</div><div class="t-top"><span class="t-name">${esc(r.name)}</span><span class="pl${p.dark?" dark":""}">${p.text}</span></div>${front}</div><div class="face bk">${backRow(r,false)}</div></div></div>`};
+  };
+  const qItem=q=>{
+    const has=!!q.alex, nm=q.name.split(/[(:]/)[0].trim(), cat=q.tileOnly?"Blood":"Rule-out", key=Reference.rank(has?"info":"none",q.weight);
+    if(!has)return{key,nodata:true,name:nm,cat,pill:"Pending",back:`<p class="bk-why" style="margin-top:0">${esc(q.say.replace(/^Pending\.\s*/,""))}</p><div class="bk-r"><i class="c"></i><span><b>Control:</b> ${esc(q.control)}</span></div><div class="bk-r"><i class="a"></i><span><b>ALS:</b> ${esc(q.als)}</span></div>`};
+    const back=`<div class="bk-h">${esc(q.name)}</div><p class="bk-why">${esc(q.say)}</p><div class="bk-r"><i class="c"></i><span><b>Control:</b> ${esc(q.control)}</span></div><div class="bk-r"><i class="a"></i><span><b>ALS:</b> ${esc(q.als)}</span></div><div class="bk-c"><b>This person:</b> ${esc(q.alex)}</div>`;
+    return{key,html:`<div class="tile neutral" tabindex="0" role="button" aria-pressed="false" aria-label="${esc(nm)}: click for details"><div class="ti"><div class="face ft"><div class="t-cat">${cat}</div><div class="t-top"><span class="t-name">${esc(nm)}</span><span class="pl">Negative</span></div><div class="t-txt">${esc(q.alex)}</div></div><div class="face bk">${back}</div></div></div>`};
+  };
+  const items=[...E.sections.filter(s=>s.rows&&s.rows.length).flatMap(s=>s.rows.map(r=>rowItem(r,s.title))),...ruleQ.map(qItem)].sort((a,b)=>a.key-b.key);
+  const have=items.filter(i=>!i.nodata), none=items.filter(i=>i.nodata);
+  const PAL=["#dde6d9","#d4dfd0","#cbd8c7","#c2d1be","#b9c9b5","#b0c2ac","#a7baa3","#9eb39a","#95ab91"];   // soft sage tints, one per card
+  const deckHtml=none.length?`<div class="deck-cell"><div class="deck" id="deck" tabindex="0" role="button" aria-label="${none.length} markers not measured yet. Click for the next one." data-n="${none.length}" data-cur="0">${none.map((c,i)=>`<div class="dk" data-i="${i}" style="--bg:${PAL[i%PAL.length]}"><div class="t-cat">${esc(c.cat)} &middot; not measured</div><div class="t-top"><span class="t-name">${esc(c.name)}</span><span class="pl">${esc(c.pill)}</span></div><div class="dk-b">${c.back}</div><span class="dk-n">${i+1} / ${none.length}</span></div>`).join("")}</div></div>`:"";
+  $("marks").innerHTML=`<h3 style="font-size:18px;margin-bottom:2px">Markers at a glance</h3><p class="note" style="margin:0">Click a tile to flip it for details. Ordered by importance: abnormal markers first, strongest ALS biomarkers first. The card pile holds markers with no result yet: click it to see the next one. Bars show the control range (green), ALS range (red) and this person (dot; hollow = other side).</p><div class="tiles">${have.map(i=>i.html).join("")}${deckHtml}</div>`;
+  layoutDeck();
+  $("fine").innerHTML=`<b>Early signs to ask about:</b> muscle twitches (arm, leg, shoulder, tongue), cramps, stiff muscles, weakness in an arm, leg or neck, slurred or nasal speech, difficulty chewing or swallowing. This report is context for a clinician and is <b>not a diagnosis</b>; reference ranges overlap and no single marker decides anything. Use <b>Download Report</b> for the full formatted version.`;
+}
+/* ---------------- APA document (shown only when printing) ---------------- */
+const apaDate=d=>d.toLocaleDateString("en-US",{year:"numeric",month:"long",day:"numeric"});
+/* ---- APA text helpers ---- */
+const NUMW=["zero","one","two","three","four","five","six","seven","eight","nine"];
+const nw=n=>(n>=0&&n<10)?NUMW[n]:String(n);                       // APA: spell out numbers below 10 (counts)
+const cap=t=>t.charAt(0).toUpperCase()+t.slice(1);
+const joinList=a=>a.length<3?a.join(" and "):a.slice(0,-1).join(", ")+", and "+a[a.length-1];   // serial comma
+const ABSN={grip:"grip strength",pinch:"key pinch strength",wpm:"speaking rate",walk:"10-m walk time",nfl:"serum neurofilament light chain",ck:"creatine kinase",trop:"high-sensitivity troponin T",amylin:"amylin",glu:"glutamate",chol:"choline",baso:"basophil count",eos:"eosinophil count",snip:"sniff nasal inspiratory pressure (SNIP)",fvc:"seated forced vital capacity (FVC)",fvcdrop:"FVC drop from sitting to supine"};
+const rowsOf=E=>E.sections.flatMap(s=>s.rows||[]);
+const dash=t=>String(t).replace(/(\d)-(\d)/g,"$1–$2");        // en dash in ranges
+const minus=t=>String(t).replace(/^-/,"−");
+function ratio(E,id){const r=rowsOf(E).find(x=>x.id===id);return r&&r.shown&&r.shown.length>1&&r.shown.every(v=>v!=null)?{r:r.shown[0],l:r.shown[1],pct:Math.round(100*r.shown[0]/r.shown[1])}:null}
+function summaryText(E,d){
+  const S=E.summary, rows=rowsOf(E).filter(r=>r.value!=null), meta=META[PATIENT], g=ratio(E,"grip"), p=ratio(E,"pinch");
+  const inAls=rows.filter(r=>r.placed.state==="als").map(r=>ABSN[r.id]||r.name.toLowerCase());
+  let t=`This report compares ${nw(S.measured)} of ${S.total} motor, respiratory, and laboratory markers for case ${PATIENT}${meta?` (${meta.who}${meta.fict?"; fictional case file":""})`:""} with reference values for healthy controls and for persons with amyotrophic lateral sclerosis (ALS). `;
+  const parts=[`${nw(S.inAls)} fell within the ALS reference range`]; if(S.beyond)parts.push(`${nw(S.beyond)} exceeded both reference ranges`); if(S.towardAls)parts.push(`${nw(S.towardAls)} fell between the ranges, closer to the ALS range`); parts.push(S.control?`${nw(S.control)} fell within the control range`:"none fell within the control range");
+  t+=`Of these, ${joinList(parts)}. `;
+  if(g)t+=`Right grip strength (${fmt(g.r)} kg) was ${g.pct}% of left (${fmt(g.l)} kg)${p?`, and right key pinch strength (${fmt(p.r)} kg) was ${p.pct}% of left (${fmt(p.l)} kg)`:""}, an asymmetry consistent with the uneven, often unilateral hand weakness described in ALS. `;
+  if(inAls.length)t+=`Markers within the ALS range were ${joinList(inAls)}. `;
+  const gen=Reference.SECTIONS.find(s=>s.id==="rule").qualitative.find(r=>r.id==="gen");
+  t+=`${gen&&gen.alex?"The genetic panel identified no pathogenic variant, which does not exclude ALS. ":""}Cerebrospinal fluid and muscle biopsy results were not available. These descriptive comparisons are not diagnostic and are intended to support clinician review.`;
+  return t;
+}
+function apaTable(n,title,rows,notes,first){
+  const stripUnit=(txt,unit)=>{const t=(txt||"").replace(new RegExp(" ?"+unit.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+"$"),"");return dash(unit.charAt(0)==="%"?t.replace(/%$/,""):t)};
+  const head=`<tr><th>Marker</th><th>Unit</th><th class="n">Control</th><th class="n">ALS</th><th class="n">Case</th><th>Placement</th></tr>`;
+  const flag=new Map(); let k=0; rows.forEach(r=>{if(r.confirm&&r.value!=null){flag.set(r.id,"abcdef"[k++])}});
+  const body=rows.map(r=>`<tr><td>${esc(r.name)}${flag.has(r.id)?`<sup>${flag.get(r.id)}</sup>`:""}</td><td>${esc(r.unit)}</td><td class="n">${r.info?"—":esc(stripUnit(r.control.text,r.unit))}</td><td class="n">${r.info?"—":esc(stripUnit(r.als.text,r.unit))}</td><td class="n">${esc(caseText(r))}</td><td>${esc(r.value==null?"Not measured":r.placed.label)}</td></tr>`).join("");
+  const fn=rows.filter(r=>flag.has(r.id)).map(r=>`<sup>${flag.get(r.id)}</sup> ${esc(r.name)}: ${esc(r.confirm)}`).join(" ");
+  const base=first?`R = right; L = left. Control and ALS columns give the reference values from the project reference table (NeuroMotion Program, 2026); Case is the most recent value. Placement states whether the case value falls in the control range, the ALS range, both, or neither.`:`Abbreviations and placement rules are as in Table 1.`;
+  return`<div class="tbl"><div class="tn">Table ${n}</div><div class="tt">${esc(title)}</div><table><thead>${head}</thead><tbody>${body}</tbody></table><p class="tnote"><i>Note.</i> ${base} ${notes||""} ${fn}</p></div>`;
+}
+function renderApa(d,E){
+  const S=E.summary, meta=META[PATIENT], sec=id=>E.sections.find(s=>s.id===id), rows=id=>sec(id).rows, all=rowsOf(E);
+  const DEC={"palm lengths":2,"syll/s":2,"words/min":0,"steps/min":0,"cmH2O":0};   // reporting precision by unit; all other units 1 decimal
+  const dpu=(unit,v)=>(+v).toFixed(unit in DEC?DEC[unit]:1);
+  const long=d.metrics?Object.entries(d.metrics).filter(([k,m])=>m.n>=3&&isFinite(m.baseline)&&m.spanDays>=14&&M()[k]&&M()[k].status!==false&&!/_(rate|speed)_/.test(k)):[];
+  const longRows=long.map(([k,m])=>{const ch=100*(m.latest-m.baseline)/m.baseline,cs=(ch>0?"+":"")+ch.toFixed(1);return`<tr><td>${esc(lab(k))}</td><td>${esc(M()[k].unit)}</td><td class="n">${dpu(M()[k].unit,m.baseline)}</td><td class="n">${dpu(M()[k].unit,m.latest)}</td><td class="n">${esc(minus(cs))}</td><td class="n">${m.n}</td><td class="n">${(m.spanDays/7).toFixed(1)}</td></tr>`}).join("");
+  const g=ratio(E,"grip"), p=ratio(E,"pinch"), fvd=all.find(r=>r.id==="fvcdrop"), q=Reference.SECTIONS.find(s=>s.id==="rule");
+  const missing=all.filter(r=>r.value==null&&!r.info).map(r=>ABSN[r.id]||r.name.toLowerCase());
+  const nbeyond=S.beyond?`, ${nw(S.beyond)} fell beyond both ranges`:"", ntoward=S.towardAls?`, ${nw(S.towardAls)} fell between the ranges closer to the ALS range`:"";
+  let h=`<div class="tb"><h1>Biomarker and Motor Function Comparison Report</h1><p>Case ${esc(PATIENT)}${meta&&meta.fict?" (Fictional Case File)":""}</p><p>NeuroMotion Program</p><p>${esc(apaDate(today))}</p></div>`;
+  h+=`<div class="abs"><h2>Abstract</h2><p>${esc(summaryText(E,d))}</p><p class="kw"><i>Keywords:</i> amyotrophic lateral sclerosis, biomarkers, neurofilament light chain, grip strength, speech rate, respiratory function</p></div>`;
+  h+=`<h2 class="pb">Biomarker and Motor Function Comparison Report</h2>`;
+  h+=`<h3>Method</h3><p>Measures were grouped into physical (grip strength, key pinch strength, speaking rate, and 10-m walk time), blood (serum neurofilament light chain, creatine kinase, high-sensitivity troponin T, amylin, glutamate, choline, and basophil and eosinophil counts), and respiratory (sniff nasal inspiratory pressure and forced vital capacity [FVC] while sitting and supine) domains. Speaking rate was timed over a standard 98-word reading passage. Each marker&rsquo;s most recent value was used.</p>`;
+  h+=`<p>Reference values for healthy controls and for persons with ALS were taken from the project reference table (NeuroMotion Program, 2026). Where the table gave a single value, a case value within 15% of it was treated as inside that reference range. Each case value was placed in the control range, the ALS range, both, or neither; values outside both ranges were described as above or below both ranges. The FVC drop was calculated as 100 &times; (sitting FVC &minus; supine FVC) / sitting FVC.</p>`;
+  h+=`<h3>Results</h3><p>Of ${S.total} comparable markers, ${nw(S.measured)} had a case value. Of these, ${nw(S.inAls)} fell within the ALS reference range${nbeyond}${ntoward}, ${S.overlap?nw(S.overlap):"none"} fell within both ranges, and ${S.control?nw(S.control):"none"} fell within the control range (Tables 1&ndash;3).${missing.length?` No case values were available for ${esc(joinList(missing))}.`:""}</p>`;
+  if(g||p)h+=`<p>Hand measures were asymmetric. ${g?`Right grip strength was ${fmt(g.r)} kg and left was ${fmt(g.l)} kg (right-to-left ratio = ${(g.r/g.l).toFixed(2)})`:""}${g&&p?"; ":""}${p?`${g?"right":"Right"} key pinch strength was ${fmt(p.r)} kg and left was ${fmt(p.l)} kg (ratio = ${(p.r/p.l).toFixed(2)})`:""}.${fvd&&fvd.value!=null?` Forced vital capacity fell by ${fvd.value.toFixed(1)}% from sitting to supine.`:""}</p>`;
+  h+=apaTable(1,"Physical Measures: Case Values Compared With Reference Values",rows("physical"),"",true);
+  h+=apaTable(2,"Blood Biomarkers: Case Values Compared With Reference Values",rows("blood"),"Em dashes indicate that no case value was available.",false);
+  h+=apaTable(3,"Respiratory Measures: Case Values Compared With Reference Values",rows("resp"),"FVC = forced vital capacity; SNIP = sniff nasal inspiratory pressure.",false);
+  if(longRows)h+=`<p>Repeated measurements allowed change from the first week of readings to the most recent week to be described (Table 4).</p><div class="tbl"><div class="tn">Table 4</div><div class="tt">Change From Baseline Across Repeated Measurements</div><table><thead><tr><th>Measure</th><th>Unit</th><th class="n">Baseline</th><th class="n">Latest</th><th class="n">Change (%)</th><th class="n"><i>n</i></th><th class="n">Span (weeks)</th></tr></thead><tbody>${longRows}</tbody></table><p class="tnote"><i>Note.</i> Baseline is the median of readings in the first week; Latest is the median of readings in the most recent week; <i>n</i> is the number of readings. For measures on which lower values are better (e.g., walk time, speech rhythm variability), a positive change indicates worsening.</p></div>`;
+  const rq=q.qualitative.filter(r=>!r.tileOnly).map(r=>r.alex?`${r.name.split(" (")[0]}: ${r.alex.toLowerCase()}. ${r.say}`:`${r.name.split(":")[0]}: results were not available. ${r.say.replace(/^Pending\.\s*/,"")}`).join(" ");
+  h+=`<h3>Rule-Outs and Pending Tests</h3><p>${esc(q.note)} ${esc(rq)}</p>`;
+  h+=`<h3>Limitations</h3><p>These comparisons are descriptive. Reference ranges for controls and persons with ALS overlap for several markers (e.g., speaking rate and creatine kinase), so no single marker is diagnostic. Most laboratory markers reflect a single time point. ${meta&&meta.fict?"The case is fictional and was constructed for demonstration. ":""}Cells of the source table that required interpretation are flagged in the table notes and should be confirmed against the primary source before clinical use. This report supports, and does not replace, clinical judgment.</p>`;
+  h+=`<div class="refs"><h2 class="pb">References</h2><p>NeuroMotion Program. (2026). <i>Biomarker reference table: Control, ALS, and case values</i> [Unpublished raw data]. NeuroMotion Program.</p><p class="ni" style="margin-top:.2in;text-indent:0"><i>Author note.</i> Primary literature citations for each reference value are not recorded in the project table and should be added before external distribution.</p></div>`;
+  $("apa").innerHTML=h;
+}
+function render(d){ current=d; const E=Reference.evaluate(d.values); renderScreen(d,E); renderApa(d,E); }
+/* ---------------- flip tiles ---------------- */
+function flipTile(t){const on=t.classList.toggle("flip");t.setAttribute("aria-pressed",on?"true":"false")}
+$("marks").addEventListener("click",e=>{const t=e.target.closest(".tile");if(t)flipTile(t)});
+$("marks").addEventListener("keydown",e=>{if(e.key!=="Enter"&&e.key!==" ")return;const t=e.target.closest(".tile");if(t){e.preventDefault();flipTile(t)}});
+/* ---------------- card pile ---------------- */
+function layoutDeck(){const d=document.getElementById("deck");if(!d)return;const n=+d.dataset.n,cur=+d.dataset.cur;d.querySelectorAll(".dk").forEach(el=>{el.dataset.r=(+el.dataset.i-cur+n)%n})}
+function nextCard(){const d=document.getElementById("deck");if(!d)return;d.dataset.cur=(+d.dataset.cur+1)%(+d.dataset.n);layoutDeck()}
+$("marks").addEventListener("click",e=>{if(e.target.closest(".deck"))nextCard()});
+$("marks").addEventListener("keydown",e=>{if(e.key!=="Enter"&&e.key!==" ")return;if(e.target.closest(".deck")){e.preventDefault();nextCard()}});
+/* ---------------- copy ---------------- */
+async function copyText(t,msg){ try{await navigator.clipboard.writeText(t)}catch(e){const a=document.createElement("textarea");a.value=t;document.body.appendChild(a);a.select();document.execCommand("copy");a.remove()} $("copy-st").textContent=msg; $("copy-st").className="st ok"; setTimeout(()=>{$("copy-st").textContent=""},3000); }
+$("copy-sum").onclick=()=>copyText(summaryText(Reference.evaluate(current.values),current),"Summary copied.");
+$("copy-tbl").onclick=()=>{const E=Reference.evaluate(current.values); const lines=[["Marker","Unit","Control","ALS","Case","Placement"].join("\t")]; for(const r of E.sections.flatMap(s=>s.rows))lines.push([r.name,r.unit,r.control.text||"",r.als.text||"",caseText(r),r.value==null?"Not measured":r.placed.label].join("\t")); copyText(lines.join("\n"),"Results table copied (tab-separated, paste into a spreadsheet).")};
+/* ---------------- add results ---------------- */
+let found={};
+function showFound(values,skipped,notes){
+  found={...values}; const ks=Object.keys(found), fs=Measures.fromSession(PATIENT,found,{}), bad=new Set(fs.errors.map(e=>e.split(":")[0]));
+  $("rev").classList.toggle("on",ks.length>0||skipped.length>0);
+  $("rev-t").innerHTML=ks.length?ks.map(k=>`<tr><td>${esc(lab(k))}</td><td><input type="number" step="any" data-k="${k}" value="${found[k]}"></td><td class="mute">${esc(M()[k].unit)}</td><td style="color:var(--bad);font-size:12px">${bad.has(k)?"outside plausible range":""}</td><td><button class="x" data-r="${k}" aria-label="Remove">&#10005;</button></td></tr>`).join(""):`<tr><td class="mute">No known markers found.</td></tr>`;
+  $("rev-t").querySelectorAll("input[data-k]").forEach(i=>i.onchange=()=>{found[i.dataset.k]=Number(i.value);showFound(found,skipped,notes)});
+  $("rev-t").querySelectorAll("[data-r]").forEach(b=>b.onclick=()=>{delete found[b.dataset.r];showFound(found,skipped,notes)});
+  $("rev-skip").textContent=[skipped.length?"Not recognised, so ignored: "+skipped.slice(0,12).join(", ")+(skipped.length>12?"...":""):"",...(notes||[])].filter(Boolean).join(" · ");
+  $("rev-save").disabled=!ks.length||bad.size>0;
+}
+const st=(t,c)=>{$("up-st").textContent=t;$("up-st").className="st "+(c||"")};
+async function handleFile(f){
+  if(!f)return; if(f.size>4*1024*1024){st("That file is over 4 MB.","bad");return}
+  st("Reading "+f.name+"...");
+  try{
+    if(/^(image\/(png|jpeg|webp)|application\/pdf)$/.test(f.type)){
+      const buf=new Uint8Array(await f.arrayBuffer());let bin="";for(let i=0;i<buf.length;i+=0x8000)bin+=String.fromCharCode.apply(null,buf.subarray(i,i+0x8000));
+      const r=await fetch("/api/extract-labs",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({mime:f.type,data:btoa(bin)})}),j=await r.json().catch(()=>({}));
+      if(!r.ok){st(j.error||"Could not read that file ("+r.status+")","bad");return}
+      showFound(j.values,j.unmatched||[],j.rejected||[]); const n=Object.keys(j.values).length; st(n?`Found ${n} value${n>1?"s":""} with Gemini. Check them before saving.`:"No known markers found in that document.",n?"ok":"bad");
+    }else{
+      const res=LabFile.parse(await f.text(),f.name); showFound(res.values,res.skipped,res.notes); const n=Object.keys(res.values).length;
+      st(n?`Found ${n} value${n>1?"s":""}. Check them before saving.`:"No known markers found in that file.",n?"ok":"bad");
+    }
+  }catch(e){st("Could not read that file: "+(e.message||e),"bad")}
+}
+const drop=$("drop");
+$("file").onchange=e=>{handleFile(e.target.files[0]);e.target.value=""};
+["dragenter","dragover"].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add("over")}));
+["dragleave","drop"].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove("over")}));
+drop.addEventListener("drop",e=>handleFile(e.dataTransfer.files[0]));
+$("rev-cancel").onclick=()=>{$("rev").classList.remove("on");found={};st("")};
+$("rev-save").onclick=async()=>{
+  const n=Object.keys(found).length; if(!n)return; st("Saving...");
+  try{ await Companion.save(PATIENT,found,{source:"lab"}); render(await getValues()); st(`Updated ${n} value${n>1?"s":""}. The report is current.`,"ok"); }
+  catch(e){
+    if(e.status){st("Could not save: "+e.message,"bad");return}
+    current.values={...current.values,...found}; render(current); st(`Server not running, so ${n} value${n>1?"s were":" was"} applied to this view only and not saved.`,"bad");
+  }
+  $("rev").classList.remove("on"); found={};
+};
+getValues().then(render);
+</script>
+</body>
+</html>

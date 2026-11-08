@@ -1,0 +1,34 @@
+/* Shared sage / glass theme for the ALS console + companion */
+:root{
+  --bg1:#c9d3c6; --bg2:#9fb09f; --page:#e9ece8;
+  --card:rgba(255,255,255,.62); --card-solid:#f4f6f3; --glass-line:rgba(255,255,255,.7);
+  --ink:#16191a; --mute:#6b756c; --line:rgba(22,25,26,.1);
+  --sage:#a9bda4; --sage-d:#6f8a6c; --sage-l:#dbe5d7; --pill:#16191a;
+  --ok:#4f8a5b; --warn:#c98a1d; --bad:#c2453a;
+  --radius:26px; --shadow:0 10px 30px rgba(60,80,60,.12);
+  --f-head:'Space Grotesk',system-ui,sans-serif; --f-body:'DM Sans',system-ui,sans-serif; --f-mono:'DM Mono',ui-monospace,Consolas,monospace; --f-dot:'Doto','DM Mono',monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){
+  --bg1:#2a332b; --bg2:#1b211c; --page:#161b17; --card:rgba(255,255,255,.07); --glass-line:rgba(255,255,255,.1);
+  --ink:#eef2ec; --mute:#97a398; --line:rgba(255,255,255,.1); --sage:#5f7a5c; --sage-d:#9bbd96; --sage-l:#2b362c; --pill:#eef2ec; --shadow:none}}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{font:15px/1.45 var(--f-body);color:var(--ink);background:linear-gradient(160deg,var(--bg1),var(--bg2));-webkit-font-smoothing:antialiased}
+h1,h2,h3{font-family:var(--f-head);margin:0;font-weight:600;letter-spacing:-.01em}
+.glass{background:var(--card);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:1px solid var(--glass-line);border-radius:var(--radius);box-shadow:var(--shadow)}
+.dot{font-family:var(--f-dot);font-weight:700;letter-spacing:.02em}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:99px;font:500 12px var(--f-mono);background:var(--sage-l);color:var(--sage-d)}
+.pill.warn{background:rgba(201,138,29,.15);color:var(--warn)} .pill.bad{background:rgba(194,69,58,.15);color:var(--bad)} .pill.ok{background:rgba(79,138,91,.15);color:var(--ok)}
+.btn{font:500 14px var(--f-body);border:0;border-radius:99px;padding:10px 18px;background:var(--pill);color:var(--page);cursor:pointer;text-decoration:none;display:inline-block}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.mute{color:var(--mute)} .mono{font-family:var(--f-mono)}
+[hidden]{display:none!important}
+
+/* ---- shared page shell + sidebar nav (used by every page via nav.js) ---- */
+.shell{display:grid;grid-template-columns:220px minmax(0,1fr);gap:16px;padding:20px 20px 40px 28px;max-width:1500px}
+.side{position:sticky;top:20px;align-self:start;margin-right:20px;display:flex;flex-direction:column;min-height:calc(100vh - 40px)}
+.logo{font:600 22px var(--f-head);padding:6px 10px 18px}
+.side nav a,nav.main-nav a{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;margin-bottom:16px;border-radius:99px;color:var(--ink);text-decoration:none;background:var(--card);border:1px solid var(--glass-line)}
+.side nav a.on,nav.main-nav a.on{background:var(--pill);color:var(--page)}
+.side .side-bottom{margin-top:auto}
+@media(max-width:1100px){.shell{grid-template-columns:1fr;padding:12px}.side{position:static;margin-right:0;min-height:0}.side nav{display:flex;gap:8px;flex-wrap:wrap}.side nav a{margin-bottom:0}.side .side-bottom{display:none}}

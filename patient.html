@@ -3,12 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Movement Check</title>
+<title>Companion - NeuroMotion</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500&family=Doto:wght@700&family=Space+Grotesk:wght@500;600&display=swap">
+<link rel="stylesheet" href="theme.css">
 <style>
-  :root { --bg:#f6f7f9; --card:#fff; --ink:#1c2430; --mute:#5d6877; --line:#dfe3e8; --acc:#2b5fa8; --warn:#9a5b00; --warnbg:#fff4de; --bad:#b3261e; --ok:#1f7a4d; }
-  @media (prefers-color-scheme: dark) {
-    :root { --bg:#12161c; --card:#1b212a; --ink:#e8ecf1; --mute:#9aa6b5; --line:#2c3541; --acc:#7fb0f0; --warn:#f0c36b; --warnbg:#2c2412; --bad:#f2928b; --ok:#6fd1a0; }
-  }
   * { box-sizing:border-box; }
   body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif; }
   main { max-width:880px; margin:0 auto; padding:16px; }
@@ -49,10 +47,16 @@
   .bar { height:10px; background:var(--line); border-radius:6px; overflow:hidden; } .bar > i { display:block; height:100%; background:var(--acc); width:0; }
   label { display:block; margin:6px 0; } input[type=text], select { font:inherit; padding:8px; width:100%; max-width:320px; }
 </style>
+<link rel="stylesheet" href="legacy.css">
 </head>
 <body>
-<main>
-  <h1>Movement Check <small>research demo</small></h1>
+<div class="shell"><aside class="side" id="navmount" data-active="companion"></aside><main>
+  <h1>Today's reps</h1>
+  <p class="sub">Quick check-ins that show how your body is doing over time. A few minutes a day.</p>
+  <div class="card" id="g-card" hidden>
+    <div class="row" style="gap:18px"><div class="gstat"><div class="n" id="g-streak">0</div><div class="l">day streak</div></div><div class="gstat"><div class="n" id="g-xp">0</div><div class="l">XP</div></div><div class="gstat"><div class="n" id="g-done">0/7</div><div class="l">reps today</div></div></div>
+    <div class="row" id="g-chips" style="margin-top:14px;gap:8px"></div>
+  </div>
   <div class="banner"><b>This is a movement check, not a strength test.</b> Your camera watches how quickly and how fully you move. It does not measure force and cannot diagnose anything. Video is analysed on this device and is not uploaded or saved; only a few summary numbers are saved, if you choose.</div>
 
   <section class="card" id="s-intro">
@@ -77,10 +81,25 @@
     <h2>3. Your result</h2><div id="res"></div>
     <div class="row" style="margin-top:8px"><button id="save">Save to my clinic record</button> <button class="sec" id="again">Try again</button> <span class="msg" id="rmsg"></span></div>
   </section>
-</main>
+  <section class="card" id="s-speech">
+    <h2>Speech check</h2>
+    <p class="hint">Uses the microphone. Audio is analysed on this device and is not uploaded or saved; only the timing numbers are kept. Use the patient code above.</p>
+    <div class="row"><button id="sp-ddk">Say "pa-ta-ka" for 10 seconds</button> <button class="sec" id="sp-mpt">Hold "ahhh" as long as you can</button> <button class="sec" id="sp-read">Read a passage aloud</button></div>
+    <div id="sp-passage" hidden style="margin-top:10px;padding:12px;border:1px solid var(--line);border-radius:10px;font-size:1.05rem;line-height:1.6"></div>
+    <div class="row" style="margin-top:6px"><button class="rec" id="sp-stop" hidden>I've finished reading</button></div>
+    <div class="row" style="margin-top:8px"><select id="sp-dev" style="max-width:280px"><option value="">Default microphone</option></select><button class="sec" id="sp-test">Test microphone</button></div>
+    <div class="bar" aria-hidden="true" style="margin-top:8px"><i id="sp-level"></i></div>
+    <p class="msg" id="sp-msg"></p><div id="sp-res"></div>
+    <div class="row"><button id="sp-save" hidden>Save to my clinic record</button></div>
+  </section>
+</main></div>
+<script src="nav.js"></script>
 <script src="supabase-config.js"></script>
 <script src="labs.js"></script>
 <script src="grip.js"></script>
+<script src="measures.js"></script>
+<script src="ddk.js"></script>
+<script src="companion-api.js"></script>
 <script>
 "use strict";
 const $ = id => document.getElementById(id);
@@ -182,8 +201,60 @@ function showResult(m) {
 }
 $("save").onclick = async () => {
   if (!lastMetrics || !lastMetrics.valid) return; const code = $("code").value.trim();
-  try { await Labs.addResults(code, Grip.toLabs(lastMetrics, cur.kind, cur.side)); $("rmsg").textContent = "Saved to your record."; $("rmsg").className = "msg ok"; $("save").hidden = true; }
+  try { await Companion.save(code, Grip.toLabs(lastMetrics, cur.kind, cur.side)); $("rmsg").textContent = "Saved to your record."; $("rmsg").className = "msg ok"; $("save").hidden = true; loadStats(); }
   catch (e) { $("rmsg").textContent = "Could not save: " + e.message; $("rmsg").className = "msg bad"; }
+};
+/* ---- streak / reps today ---- */
+$("code").value = new URLSearchParams(location.search).get("patient") || "ALEX-CASE";
+const REPS = [["grip_amp_r", "Fist, right"], ["grip_amp_l", "Fist, left"], ["foot_amp_r", "Toe-lift, right"], ["foot_amp_l", "Toe-lift, left"], ["ddk_rate", "Pa-ta-ka"], ["speech_wpm", "Read aloud"], ["mpt_s", "Hold ahh"]];
+async function loadStats() {
+  const code = $("code").value.trim(); if (!code) { $("g-card").hidden = true; return; }
+  try {
+    const s = await Companion.summary(code), t0 = new Date(); t0.setHours(0, 0, 0, 0);
+    const done = REPS.map(r => [r[1], !!(s.metrics[r[0]] && s.metrics[r[0]].lastT >= t0.getTime())]);
+    $("g-streak").textContent = s.activity.streak; $("g-xp").textContent = s.activity.xp; $("g-done").textContent = done.filter(d => d[1]).length + "/" + REPS.length;
+    $("g-chips").innerHTML = done.map(d => `<span class="gchip${d[1] ? " on" : ""}">${d[1] ? "✓" : "○"} ${esc(d[0])}</span>`).join(""); $("g-card").hidden = false;
+  } catch (e) { $("g-card").hidden = true; }
+}
+$("code").addEventListener("change", loadStats); loadStats();
+/* ---- speech check ---- */
+let spValues = null;
+async function speechRun(kind) {
+  const code = $("code").value.trim(), msg = $("sp-msg"); $("sp-save").hidden = true; $("sp-res").innerHTML = ""; spValues = null;
+  if (!code) { msg.textContent = "Please enter your patient code above."; msg.className = "msg w"; return; }
+  const secs = kind === "ddk" ? 10 : kind === "read" ? 90 : 15, abort = { stop: false }; $("sp-passage").hidden = kind !== "read"; $("sp-stop").hidden = kind !== "read"; if (kind === "read") { $("sp-passage").textContent = DDK.PASSAGE; $("sp-stop").onclick = () => { abort.stop = true; }; } msg.className = "msg"; msg.textContent = kind === "ddk" ? "Get ready: say pa-ta-ka again and again, as fast and clearly as you can..." : kind === "read" ? "Get ready to read the passage below out loud at your normal pace. Press the button when you finish." : "Take a deep breath, then say ahhh for as long as you can...";
+  $("sp-ddk").disabled = $("sp-mpt").disabled = $("sp-read").disabled = true;
+  try {
+    await new Promise(r => setTimeout(r, 1500)); msg.textContent = "Recording... go!";
+    const rec = await Companion.recordMic(secs, l => { $("sp-level").style.width = Math.round(l * 100) + "%"; }, abort, { deviceId: $("sp-dev").value }), { samples, sampleRate } = rec; $("sp-stop").hidden = true; spFillDevices();
+    if (!samples.length) { msg.textContent = "No audio reached the page from \"" + (rec.label || "the microphone") + "\". Check the browser's microphone permission, make sure no other app is using the mic, or pick a different microphone above."; msg.className = "msg bad"; return; }
+    if (rec.peak < 0.02) { msg.textContent = "Microphone \"" + (rec.label || "default") + "\" is very quiet (peak " + Math.round(rec.peak * 100) + "%). Raise the input volume in your system sound settings, move closer, or choose another microphone above."; msg.className = "msg bad"; return; }
+    $("sp-level").style.width = "0"; const m = kind === "ddk" ? DDK.analyzeDDK(samples, sampleRate) : kind === "read" ? DDK.analyzeReading(samples, sampleRate) : DDK.analyzeMPT(samples, sampleRate);
+    if (!m.valid) { msg.textContent = "We couldn't get a reliable measurement: " + m.reasons.join("; ") + ". Nothing was saved."; msg.className = "msg bad"; return; }
+    spValues = kind === "ddk" ? DDK.ddkToValues(m) : kind === "read" ? DDK.readingToValues(m) : DDK.mptToValues(m);
+    msg.textContent = "Done." + ((m.warn || []).length ? " Note: " + m.warn.join("; ") + "." : ""); msg.className = "msg ok";
+    $("sp-res").innerHTML = "<table>" + (kind === "read" ? `<tr><td>Words per minute</td><td>${m.wpm.toFixed(0)}</td></tr><tr><td>Time spent pausing</td><td>${(100 * m.pauseFrac).toFixed(0)}%</td></tr>` : kind === "ddk" ? `<tr><td>Syllables per second</td><td>${m.rate.toFixed(2)}</td></tr><tr><td>Rhythm variability</td><td>${m.cv.toFixed(0)}%</td></tr><tr><td>Long pauses</td><td>${m.pauses}</td></tr>` : `<tr><td>Sustained sound</td><td>${m.mpt.toFixed(1)} s</td></tr>`) + "</table><p class='small'>Compare with your own earlier results, same room and mic.</p>";
+    $("sp-save").hidden = false;
+  } catch (e) { msg.textContent = "Could not use the microphone: " + ((e && e.name === "NotAllowedError") ? "permission was denied. Allow the mic for this site and try again." : (e && e.message) || e); msg.className = "msg bad"; }
+  finally { $("sp-ddk").disabled = $("sp-mpt").disabled = $("sp-read").disabled = false; $("sp-stop").hidden = true; }
+}
+async function spFillDevices() { const ds = await Companion.audioInputs(), sel = $("sp-dev"), cur = sel.value; sel.innerHTML = '<option value="">Default microphone</option>' + ds.map(d => `<option value="${esc(d.deviceId)}">${esc(d.label || "Microphone")}</option>`).join(""); sel.value = cur; }
+async function spTest() {
+  const msg = $("sp-msg"); msg.className = "msg"; msg.textContent = "Say something for 4 seconds..."; $("sp-test").disabled = true;
+  try { const r = await Companion.recordMic(4, l => { $("sp-level").style.width = Math.round(l * 100) + "%"; }, null, { deviceId: $("sp-dev").value }); $("sp-level").style.width = "0"; await spFillDevices();
+    const pk = Math.round(r.peak * 100), name = r.label || "default microphone";
+    if (!r.samples.length) { msg.textContent = "No audio reached the page from \"" + name + "\". Allow the microphone for this site and close other apps using it."; msg.className = "msg bad"; }
+    else if (r.peak < 0.01) { msg.textContent = "Heard nothing from \"" + name + "\" (peak " + pk + "%). It may be muted or the wrong device: choose another microphone above."; msg.className = "msg bad"; }
+    else if (r.peak < 0.05) { msg.textContent = "\"" + name + "\" works but is quiet (peak " + pk + "%). Move closer or raise the input volume."; msg.className = "msg w"; }
+    else { msg.textContent = "\"" + name + "\" works (peak " + pk + "%). You can start a speech check."; msg.className = "msg ok"; }
+  } catch (e) { msg.textContent = e && e.name === "NotAllowedError" ? "The microphone is blocked. Click the lock icon in the address bar, allow the microphone, then reload." : "Could not use the microphone: " + ((e && e.message) || e); msg.className = "msg bad"; }
+  finally { $("sp-test").disabled = false; }
+}
+$("sp-test").onclick = spTest;
+$("sp-ddk").onclick = () => speechRun("ddk"); $("sp-mpt").onclick = () => speechRun("mpt"); $("sp-read").onclick = () => speechRun("read");
+$("sp-save").onclick = async () => {
+  if (!spValues) return; try { const r = await Companion.save($("code").value.trim(), spValues); $("sp-msg").textContent = "Saved to your record" + (r.via === "local" ? " (on this device)." : "."); $("sp-msg").className = "msg ok"; $("sp-save").hidden = true; spValues = null; loadStats(); }
+  catch (e) { $("sp-msg").textContent = "Could not save: " + e.message; $("sp-msg").className = "msg bad"; }
 };
 $("again").onclick = () => { $("s-res").hidden = true; $("rmsg").textContent = ""; $("start").onclick(); };
 </script>
