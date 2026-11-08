@@ -23,4 +23,31 @@ function alexRecords(now = Date.now(), patient = "ALEX-CASE") {
   for (const [ago, v] of visits) recs.push(...Measures.fromSession(patient, v, { t: now - ago * DAY, source: "clinic", session: `${patient}-clinic${ago}`, now }).recs);
   return recs;
 }
-module.exports = { alexRecords };
+// A small synthetic cohort so the Patients page has something to compare: different time in the programme, different areas declining, one gone quiet.
+// dec = fraction lost by the last reading (hand / speech / legs); fvc = clinic FVC sitting [first, last] when breathing is part of the story; gap = days since the last check-in.
+const COHORT = [
+  { code: "DEMO-01", days: 84, hand: .7, speech: .12, leg: .02, gap: 0, p: 1.4 },
+  { code: "DEMO-02", days: 120, hand: .03, speech: .3, leg: .03, gap: 1, p: 1.2 },
+  { code: "DEMO-03", days: 56, hand: .02, speech: .02, leg: .01, gap: 0, p: 1 },
+  { code: "DEMO-04", days: 140, hand: .03, speech: .02, leg: .02, gap: 0, p: 1 },
+  { code: "DEMO-05", days: 42, hand: .02, speech: .03, leg: .17, gap: 3, p: 1 },
+  { code: "DEMO-06", days: 70, hand: .11, speech: .03, leg: .02, gap: 12, p: 1 },
+  { code: "DEMO-07", days: 21, hand: .01, speech: .01, leg: .01, gap: 0, p: 1 },
+  { code: "DEMO-08", days: 98, hand: .03, speech: .04, leg: .03, gap: 2, p: 1, fvc: [94, 87, 79] },
+];
+function cohortRecords(now = Date.now()) {
+  const recs = [], jit = (d, k) => Math.sin(d * 12.9898 + k * 78.233) * .5;
+  COHORT.forEach((c, pi) => {
+    for (let d = 0; d < c.days; d++) {
+      if ((d + pi) % 9 === 4) continue;
+      const f = Math.pow(d / (c.days - 1), c.p), ago = c.gap + (c.days - 1 - d), t = Math.min(now - ago * DAY + 9 * 3600e3, now - 36e5), k = pi * 7, j = n => 1 + .04 * jit(d, k + n);
+      const v = { grip_amp_r: 1.25 * (1 - c.hand * f) * j(1), grip_amp_l: 1.28 * (1 - c.hand * .12 * f) * j(2), foot_amp_r: 32 * (1 - c.leg * f) * j(3), foot_amp_l: 33 * (1 - c.leg * .9 * f) * j(4),
+        ddk_rate: 6.4 * (1 - c.speech * f) * j(5), gait_cadence: 108 * (1 - c.leg * .35 * f) * j(6),
+        ...(d % 3 === 0 ? { vowel_vsa: .33 * (1 - c.speech * 1.1 * f) * j(7) } : {}), ...(d % 7 === 0 ? { speech_wpm: Math.round(160 * (1 - c.speech * f) * j(8)) } : {}) };
+      recs.push(...Measures.fromSession(c.code, v, { t, source: "companion", session: `${c.code}-c${d}`, now }).recs);
+    }
+    if (c.fvc) for (const [i, val] of c.fvc.entries()) recs.push(...Measures.fromSession(c.code, { fvc_sit_pct: val }, { t: now - [c.days, c.days / 2, c.gap + 1][i] * DAY, source: "clinic", session: `${c.code}-clinic${i}`, now }).recs);
+  });
+  return recs;
+}
+module.exports = { alexRecords, cohortRecords, COHORT };

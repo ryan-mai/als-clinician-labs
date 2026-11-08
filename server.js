@@ -13,13 +13,15 @@
 //   POST /api/patient/onboard {patient, answers{symptom keys}, months, matters, consent}   the phone onboarding: the server works out the triage tier; sudden onset = emergency flag
 //   GET  /api/triage ?patient=CODE   the patient's self-reported symptom screens (care team; no sign-in, protect a shared site with ACCESS_TOKEN)
 //   GET/POST /api/conversation-plan  ?patient= / {patient, questions[]}   the questions the doctor wants asked in that patient's check-in chat (care team)
+//   GET  /api/patients                       care-team roster: every code with status level, biggest changes, weekly trajectory + cohort stats (Patients page)
+//   GET  /api/cohort-insights                Gemini summary of what differs between patients (rule-based text without GEMINI_API_KEY)
 //   GET  /api/series         ?patient=&metrics=a,b   weekly buckets per metric (from the continuous aggregate on Tiger Data)
 //   GET  /api/engine                         storage statistics + live benchmark for the Data engine page
 //   GET  /api/health
 // Env: PORT (8780), HOST (127.0.0.1), DATABASE_URL (Tiger Cloud / Postgres), DATABASE_SSL (no-verify if the certificate check fails), DATA_FILE, GEMINI_API_KEY, GEMINI_MODEL, ELEVENLABS_API_KEY, ELEVENLABS_AGENT_ID, ELEVENLABS_CHAT_AGENT_ID. Keys never reach the browser.
 // Demo scope: de-identified/synthetic patient codes only, no authentication. Do not expose beyond localhost with real data.
 const http = require("http"), crypto = require("crypto"), fs = require("fs"), path = require("path"), { URL } = require("url");
-const Auth = require("./auth.js"), Triage = require("./triage.js");
+const Auth = require("./auth.js"), Triage = require("./triage.js"), Roster = require("./roster.js");
 const Measures = require("./measures.js"), Dictation = require("./dictation.js"), Convo = require("./convo.js");
 const ROOT = __dirname, MIME = { ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8", ".json": "application/json", ".glb": "model/gltf-binary", ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp", ".svg": "image/svg+xml", ".ico": "image/x-icon" };
 const PRIVATE = new Set(["auth.js", "python", "patient_profiles.json", "server.js", "seed.js", "store.js", "package.json", "package-lock.json", "node_modules", "deploy", "elevenlabs", ".env", ".env.example", ".gitignore", "data_store"]);
@@ -87,6 +89,21 @@ async function reportSummary(findings, env, mode) {
   }
   throw last;
 }
+// Cohort insights for the Patients page: Gemini reads only the de-identified roster facts (codes, weeks, % of own baseline) and points out what differs between patients. Falls back to rule-based text.
+async function cohortInsights(facts, env) {
+  const prompt = "You help a neurology care team scan their ALS monitoring roster. Use ONLY the JSON below (study codes and numbers). Rules: plain clinical language, no diagnosis, no treatment advice, do not invent or change numbers, always name patients by their code. Compare patients with each other: who is changing fastest, which body area keeps showing up, who has gone quiet, who has been stable the longest, anything that needs a call this week. Return JSON {\"headline\": string (max 25 words), \"bullets\": string[] (3 to 5 items, each max 30 words, each citing at least one code)}.\nROSTER: " + JSON.stringify(facts);
+  const models = [env.GEMINI_MODEL || "gemini-3.5-flash-lite", "gemini-3.1-flash-lite"].filter((m, i, a) => a.indexOf(m) === i); let last;
+  for (const model of models) {
+    try {
+      const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, { method: "POST", signal: AbortSignal.timeout(20000), headers: { "Content-Type": "application/json", "x-goog-api-key": env.GEMINI_API_KEY }, body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { responseMimeType: "application/json", temperature: 0.2 } }) });
+      if (!r.ok) { let m = ""; try { m = (await r.json()).error.message; } catch (e) {} throw new Error("Gemini " + r.status + (m ? ": " + m.slice(0, 140) : "")); }
+      const j = JSON.parse((await r.json()).candidates[0].content.parts[0].text);
+      if (typeof j.headline !== "string" || !Array.isArray(j.bullets) || !j.bullets.length) throw new Error("Gemini returned an unexpected shape");
+      return { source: "gemini", headline: clip(j.headline, 220), bullets: j.bullets.slice(0, 5).map(x => clip(x, 260)) };
+    } catch (e) { last = e; console.error(`cohort-insights ${model} failed: ${e.message}`); }
+  }
+  throw last;
+}
 // Optional shared access key (ACCESS_TOKEN in .env). Open the site once with ?key=TOKEN; a cookie then lets you in. Use this whenever the server is reachable from outside this computer (e.g. a Cloudflare tunnel).
 function authorised(req, res, u, token) {
   const eq = (a, b) => { const x = Buffer.from(String(a)), y = Buffer.from(String(b)); return x.length === y.length && crypto.timingSafeEqual(x, y); };
@@ -98,20 +115,25 @@ function authorised(req, res, u, token) {
   if (key && eq(key, token)) { u.searchParams.delete("key"); const rest = u.searchParams.toString(); return grant(u.pathname + (rest ? "?" + rest : "")); }       // /page?key=KEY
   const m = /^\/k\/([^/]+)\/?$/.exec(u.pathname);                                                                                                          // /k/KEY: short link with no query string, which survives apps that strip "?..."
   if (m && eq(decodeURIComponent(m[1]), token)) return grant("/session.html");
-  const wantsPage = !u.pathname.startsWith("/api/") && String(req.headers.accept || "").includes("text/html");
-  if (wantsPage) {   // a small sign-in page so the key can simply be typed or pasted
-    res.writeHead(401, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" });
-    const card = (title, hint, action, ph, btn) => `<form method="get" action="${action}" style="background:#fff;padding:22px;border-radius:20px;box-shadow:0 8px 30px rgba(0,0,0,.15)"><h2 style="margin:0 0 6px;font-size:20px">${title}</h2><p style="margin:0 0 12px;color:#555;font-size:14px">${hint}</p><input name="key" type="password" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="${ph}" style="width:100%;box-sizing:border-box;padding:12px;font-size:16px;border:1px solid #ccc;border-radius:12px"><button style="margin-top:12px;width:100%;padding:12px;font-size:16px;border:0;border-radius:99px;background:#16191a;color:#fff">${btn}</button></form>`;
-    res.end(`<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>NeuroMotion</title><body style="font:16px system-ui;background:#c9d3c6;margin:0;display:flex;min-height:100vh;align-items:center;justify-content:center"><div style="display:grid;gap:16px;width:min(380px,92vw);padding:16px 0"><h1 style="margin:0;text-align:center;font-size:24px">NeuroMotion</h1>` + card("Healthcare provider login", "Enter your access code to continue.", u.pathname.replace(/[^\w\/.\-]/g, ""), "access code", "Log in") + card("Patient login", "Welcome. Enter the code you were given.", "/session.html", "your code", "Continue") + `</div>`);
-    return false;
-  }
+  if (!u.pathname.startsWith("/api/") && String(req.headers.accept || "").includes("text/html")) { res.writeHead(401, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" }); res.end(loginPage("", "", u.pathname)); return false; }
   res.writeHead(401, { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store" }); res.end("Access key required. Open this site with ?key=YOUR_KEY once."); return false;
+}
+
+// Sign-in page: two pill choices (same look as the nav bar), then the key box for the chosen one. role: "" | "doctor" | "care"
+function loginPage(error, role, next) {
+  const esc = t => String(t).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const opts = [["doctor", "Doctor key", "Enter the doctor key to continue.", "doctor key"], ["care", "Care key", "Welcome. Enter the key your care team gave you.", "your care key"]];
+  const cur = opts.find(o => o[0] === role);
+  const pills = opts.map(o => `<a class="pill${o[0] === role ? " on" : ""}" href="/login?role=${o[0]}&next=${encodeURIComponent(next || "/")}"><span>${o[1]}</span><span>${o[0] === role ? "&#8600;" : "&rarr;"}</span></a>`).join("");
+  const form = cur ? `<form method="post" action="/login"><input type="hidden" name="role" value="${cur[0]}"><input type="hidden" name="next" value="${esc(next || "/")}"><p class="hint">${cur[2]}</p>${error ? `<p class="err">${esc(error)}</p>` : ""}<input name="key" type="password" autofocus autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="${cur[3]}"><button>Open</button></form>` : `<p class="hint">Choose how you are signing in.</p>`;
+  return `<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>NeuroMotion</title><style>body{font:16px system-ui,sans-serif;background:#c9d3c6;margin:0;display:flex;min-height:100vh;align-items:center;justify-content:center;color:#16191a}.card{width:min(400px,92vw);background:#fff;padding:26px;border-radius:28px;box-shadow:0 8px 30px rgba(0,0,0,.15)}h1{margin:0 0 14px;font-size:26px}.hint{margin:4px 0 12px;color:#555;font-size:15px}.err{margin:0 0 12px;color:#c2453a;font-size:14px}.pill{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;margin-bottom:12px;border-radius:99px;color:#16191a;text-decoration:none;background:#e6eae4;border:1px solid #d3d9d1}.pill.on{background:#16191a;color:#fff}input{width:100%;box-sizing:border-box;padding:14px 18px;font-size:16px;border:1px solid #ccc;border-radius:99px}button{margin-top:12px;width:100%;padding:14px;font-size:16px;border:0;border-radius:99px;background:#16191a;color:#fff;cursor:pointer}</style><body><div class="card"><h1>NeuroMotion</h1>${pills}${form}</div>`;
 }
 function createApp(opts = {}) {
   const env = opts.env || process.env, store = opts.store || (opts.dataFile !== undefined ? createJsonStore(opts.dataFile) : makeStore(env, ROOT));
   const ready = (async () => {
     if (!opts.store) await store.init();                               // a store passed in is already initialised by the caller
     if (env.SEED_DEMO !== "0" && !(await store.hasPatient("ALEX-CASE"))) { await store.add(require("./seed.js").alexRecords()); console.log("Seeded demo data for ALEX-CASE (set SEED_DEMO=0 to disable)."); }
+    if (env.SEED_DEMO !== "0" && !(await store.hasPatient("DEMO-01"))) { await store.add(require("./seed.js").cohortRecords()); console.log("Seeded synthetic DEMO-01..08 cohort for the Patients page (set SEED_DEMO=0 to disable)."); }
   })();
   const json = (res, code, obj) => { const b = JSON.stringify(obj); res.writeHead(code, { "Content-Type": "application/json", "Cache-Control": "no-store" }); res.end(b); };
   const body = (req, limit = 100e3) => new Promise((ok, no) => { let n = 0, c = [], over = false; req.on("data", d => { n += d.length; if (over) return; if (n > limit) { over = true; c = []; no(Object.assign(new Error("body too large"), { status: 413 })); } else c.push(d); }); req.on("end", () => { if (over) return; try { ok(c.length ? JSON.parse(Buffer.concat(c).toString()) : {}); } catch (e) { no(Object.assign(new Error("invalid JSON"), { status: 400 })); } }); req.on("error", no); });
@@ -129,6 +151,36 @@ function createApp(opts = {}) {
   // Their symptom answers go to the triage record (data_store/triage.json), where the server works out the tier.
   const onboardFile = path.join(dataDir, "patient_onboarding.json");
   const planFor = code => { const p = readPlans()[code]; return p && Array.isArray(p.questions) && p.questions.length ? { questions: p.questions, isDefault: false } : { questions: Convo.DEFAULT_QUESTIONS.slice(), isDefault: true }; };
+  // ---- Sign-in: doctor key (DOCTOR_KEY, default "biohacks") unlocks the whole console; a care key is a patient code (ALEX-CASE demo data, or any code the doctor has set up) and unlocks only that person's phone page.
+  const doctorKey = env.DOCTOR_KEY || "biohacks", sealCode = code => crypto.createHmac("sha256", String(env.ACCESS_TOKEN)).update("care:" + code).digest("base64url");
+  const eqs = (a, b) => { const x = Buffer.from(String(a)), y = Buffer.from(String(b)); return x.length === y.length && crypto.timingSafeEqual(x, y); };
+  const cookieOf = (req, name) => { const c = (req.headers.cookie || "").split(/;\s*/).map(c => c.split("=")).find(c => c[0] === name); try { return c ? decodeURIComponent(c[1] || "") : ""; } catch (e) { return ""; } };
+  const careCode = req => { const [code, sig] = cookieOf(req, "motor_care").split("."); return code && sig && eqs(sig, sealCode(code)) ? code : null; };
+  const PATIENT_API = ["/api/eleven-session", "/api/patient/status", "/api/patient/onboard", "/api/measurements"];
+  function patientAllowed(req, u) {
+    const code = careCode(req); if (!code) return false;
+    if (u.pathname.startsWith("/api/")) return PATIENT_API.includes(u.pathname) && (u.searchParams.get("patient") === code || req.method === "POST");
+    return !/\.html?$/.test(u.pathname) || u.pathname === "/session.html";
+  }
+  // First-ever check-in: the same chat agent is told to find out what has changed, by voice, instead of the patient ticking boxes. The phone listens for symptoms in what is said and the patient confirms a short list.
+  const ONBOARD_TOPICS = ["Ask how they have been lately and whether anything has changed in their strength, movement, speech, swallowing or breathing. Ask whether anything came on suddenly, over minutes or hours, or gradually.",
+    "Ask about their hands and arms: dropping things, buttons, jar lids, weakness, twitching, cramps or stiffness. Ask which side, if any, is worse.",
+    "Ask about their legs and walking: tripping, heavy feet, falls. Then ask about speech, chewing and swallowing, choking, drooling, and any breathlessness or poor sleep.",
+    "Ask how it began, roughly how many months ago, whether it started on one side, whether it has spread, and whether it is getting steadily worse.",
+    "Ask if there is anything else: numbness or tingling, bladder or bowel changes, drooping eyelids, weight loss, mood or memory changes, or family history of ALS or similar conditions. Then say goodbye."];
+  async function knownCode(code) { if (!codeOk(code)) return false; await ready; return (await store.hasPatient(code)) || !!readPlans()[code] || !!readMap(onboardFile)[code]; }
+  async function login(req, res, u) {
+    const secure = req.headers["x-forwarded-proto"] === "https" ? "; Secure" : "", page = (code, html) => { res.writeHead(code, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" }); res.end(html); };
+    const parse = u2 => String(u2 || "/").startsWith("/") && !String(u2).startsWith("//") ? String(u2) : "/";
+    if (req.method !== "POST") return page(200, loginPage("", u.searchParams.get("role") || "", parse(u.searchParams.get("next"))));
+    let raw = ""; for await (const d of req) { raw += d; if (raw.length > 4e3) break; }
+    const f = new URLSearchParams(raw), role = f.get("role") === "care" ? "care" : "doctor", key = String(f.get("key") || "").trim(), next = parse(f.get("next"));
+    const go = (cookie, to) => { res.writeHead(302, { "Set-Cookie": cookie + `; HttpOnly; SameSite=Lax; Path=/; Max-Age=2592000${secure}`, Location: to, "Cache-Control": "no-store" }); res.end(); };
+    if (role === "doctor") { if (eqs(key, doctorKey) || eqs(key, env.ACCESS_TOKEN)) return go(`motor_access=${encodeURIComponent(env.ACCESS_TOKEN)}`, next === "/login" ? "/" : next); return page(401, loginPage("That doctor key is not right.", "doctor", next)); }
+    const code = key.toUpperCase() === "ALEX-CASE" ? "ALEX-CASE" : key;
+    if (await knownCode(code)) return go(`motor_care=${encodeURIComponent(code + "." + sealCode(code))}`, "/session.html?patient=" + encodeURIComponent(code));
+    return page(401, loginPage("We don't recognise that key. Ask your care team for yours.", "care", next));
+  }
   async function api(req, res, u) {
     const p = u.pathname, q = u.searchParams;
     if (p === "/api/health" && req.method === "GET") return json(res, 200, { ok: true, records: await store.count(), store: store.kind, gemini: !!env.GEMINI_API_KEY, elevenlabs: !!(env.ELEVENLABS_API_KEY && env.ELEVENLABS_AGENT_ID), elevenlabsChat: !!(env.ELEVENLABS_API_KEY && env.ELEVENLABS_CHAT_AGENT_ID) });
@@ -153,6 +205,19 @@ function createApp(opts = {}) {
       if (!pt) return json(res, 400, { error: "patient is required" });
       if (!ms.length || ms.length > 12 || ms.some(m => !Measures.METRICS[m])) return json(res, 400, { error: "metrics must be 1 to 12 known metric ids" });
       const t0 = Date.now(), series = await store.weekly(pt, ms); return json(res, 200, { series, source: store.kind, ms: Date.now() - t0 });
+    }
+    if ((p === "/api/patients" || p === "/api/cohort-insights") && req.method === "GET") {   // care-team roster (protect a shared site with ACCESS_TOKEN)
+      const now = Date.now(), listed = await store.patients(60), recs = [];
+      for (let i = 0; i < listed.length; i += 10) for (const part of await Promise.all(listed.slice(i, i + 10).map(x => store.forPatient(x.patient)))) recs.push(...part);
+      const extra = [...Object.keys(readPlans()), ...Object.keys(readMap(onboardFile))].filter(codeOk);
+      const roster = Roster.buildRoster(recs, clinicians.allTriage(), extra, now);
+      if (p === "/api/patients") return json(res, 200, { ...roster, truncated: listed.length >= 60 });
+      const facts = Roster.insightFacts(roster.patients), tpl = Roster.templateInsights(roster.patients, roster.cohort);
+      if (!env.GEMINI_API_KEY || !facts.length) return json(res, 200, { ...tpl, note: facts.length ? "GEMINI_API_KEY not set" : undefined });
+      const key = "cohort" + crypto.createHash("sha256").update(JSON.stringify(facts)).digest("hex"), c = reportCache.get(key);
+      if (c && now - c.t < 6e5) return json(res, 200, c.out);
+      try { const out = await cohortInsights(facts, env); reportCache.set(key, { t: now, out }); return json(res, 200, out); }
+      catch (e) { console.error("cohort-insights failed:", e.message); return json(res, 200, { ...tpl, note: "Gemini failed; rule-based text shown" }); }
     }
     if (p === "/api/engine" && req.method === "GET") return json(res, 200, await store.engine());
     if (p === "/api/extract-labs" && req.method === "POST") {
@@ -182,7 +247,7 @@ function createApp(opts = {}) {
     if (p === "/api/eleven-session" && req.method === "GET" && q.get("agent") === "chat") {   // patient check-in chat: open like the rest of the patient page, keyed by the de-identified code
       if (!env.ELEVENLABS_API_KEY || !env.ELEVENLABS_CHAT_AGENT_ID) return json(res, 503, { error: "ELEVENLABS_API_KEY and ELEVENLABS_CHAT_AGENT_ID are not set" });
       const code = String(q.get("patient") || ""); if (!codeOk(code)) return json(res, 400, { error: "patient code is required" });
-      const plan = planFor(code);
+      const plan = q.get("mode") === "onboard" ? { questions: ONBOARD_TOPICS } : planFor(code);
       const r = await fetch("https://api.elevenlabs.io/v1/convai/conversation/get-signed-url?agent_id=" + encodeURIComponent(env.ELEVENLABS_CHAT_AGENT_ID), { headers: { "xi-api-key": env.ELEVENLABS_API_KEY } });
       if (!r.ok) return json(res, 502, { error: "ElevenLabs " + r.status });
       return json(res, 200, { signedUrl: (await r.json()).signed_url, dynamicVariables: { questions: Convo.numbered(plan.questions), question_count: String(plan.questions.length), interests: Convo.interestsText((readMap(onboardFile)[code] || {}).matters) }, questions: plan.questions });
@@ -245,7 +310,10 @@ function createApp(opts = {}) {
   }
   const server = http.createServer(async (req, res) => {
     const u = new URL(req.url, "http://x");
-    if (env.ACCESS_TOKEN && !authorised(req, res, u, env.ACCESS_TOKEN)) return;
+    if (env.ACCESS_TOKEN) {
+      if (u.pathname === "/login") return login(req, res, u);
+      if (!patientAllowed(req, u) && !authorised(req, res, u, env.ACCESS_TOKEN)) return;
+    }
     if (u.pathname.startsWith("/api/")) { try { await ready; await api(req, res, u); } catch (e) { json(res, e.status || 500, { error: e.status ? e.message : "server error" }); if (!e.status) console.error(e); } }
     else serveStatic(req, res, u);
   });

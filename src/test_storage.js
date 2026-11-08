@@ -17,7 +17,7 @@ const listen = async srv => { await srv.ready; await new Promise(r => srv.listen
   a = await get(srv, "/api/series?metrics=ck"); ok(a.s === 400, "series needs patient");
   a = await get(srv, "/api/series?patient=ALEX-CASE&metrics=nope"); ok(a.s === 400, "series rejects unknown metric");
   a = await get(srv, "/api/series?patient=ALEX-CASE&metrics=" + Array(13).fill("ck").join(",")); ok(a.s === 400, "series caps metric count");
-  a = await get(srv, "/api/engine"); ok(a.s === 200 && a.j.backend === "json" && a.j.rows > 400 && a.j.patients === 1, "engine (json) " + JSON.stringify(a.j));
+  a = await get(srv, "/api/engine"); ok(a.s === 200 && a.j.backend === "json" && a.j.rows > 400 && a.j.patients >= 1, "engine (json) " + JSON.stringify(a.j));
   a = await get(srv, "/api/health"); ok(a.j.store === "json", "health reports the store kind"); srv.close();
 
   // ---- Postgres store on pg-mem (plain Postgres: the fallback path) ----

@@ -72,6 +72,7 @@ function makeClinicianStore(dir) {
     onboard(sub, { name, role, org }, now = Date.now()) { const all = read(file); if (!all[sub]) return null; all[sub] = { ...all[sub], profileName: name, name, role, org, onboardedAt: now }; write(file, all); return all[sub]; },
     addTriage(rec) { const all = read(triFile); all.push(rec); write(triFile, all); return rec; },
     triageFor(patient) { return read(triFile).filter(r => r.patient === patient); },
+    allTriage() { return read(triFile); },
     audit(action, user, detail = {}) { try { fs.appendFileSync(auditFile, JSON.stringify({ t: new Date().toISOString(), action, user: user ? user.email : null, ...detail }) + "\n"); } catch (e) { console.error("audit log write failed:", e.message); } },
   };
 }
