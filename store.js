@@ -154,7 +154,7 @@ function createPgStore(opts = {}) {
 }
 
 function makeStore(env, root) {
-  if (env.DATABASE_URL) return createPgStore({ connectionString: env.DATABASE_URL, noVerify: env.DATABASE_SSL === "no-verify" });
+  if (env.DATABASE_URL && env.LOCAL_ONLY !== "1") return createPgStore({ connectionString: env.DATABASE_URL, noVerify: env.DATABASE_SSL === "no-verify" });
   return createJsonStore(env.DATA_FILE || path.join(root, "data_store", "measurements.json"));
 }
 module.exports = { createJsonStore, createPgStore, makeStore, weeklyFromRecords };

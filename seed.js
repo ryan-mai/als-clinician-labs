@@ -10,6 +10,8 @@ function alexRecords(now = Date.now(), patient = "ALEX-CASE") {
     const f = d / 69, t = now - (70 - d) * DAY + 9 * 3600e3 - ((now - (70 - d) * DAY) % DAY) * 0 , v = {
       grip_amp_r: 1.25 - .55 * f + .04 * jit(d, 1), grip_amp_l: 1.28 - .04 * f + .04 * jit(d, 2),
       foot_amp_r: 32 - 9 * f + 1.2 * jit(d, 3), foot_amp_l: 33 - .5 * f + 1.2 * jit(d, 4),
+      grip_score_r: 1.9 * (1 - .42 * f) * (1 + .04 * jit(d, 9)), grip_score_l: 2.0 * (1 - .03 * f) * (1 + .04 * jit(d, 10)), pinch_score_r: 1.6 * (1 - .4 * f) * (1 + .04 * jit(d, 11)), pinch_score_l: 1.7 * (1 - .025 * f) * (1 + .04 * jit(d, 12)),   // phone camera scores: right side declines, left steady
+      ...(d % 3 === 0 ? { vowel_vsa: .33 * (1 - .3 * f) * (1 + .05 * jit(d, 13)), vowel_vcr: .85 * (1 + .12 * f) * (1 + .02 * jit(d, 14)), jaw_speed: 3.2 * (1 - .18 * f) * (1 + .05 * jit(d, 15)), lip_range: .45 * (1 - .15 * f) * (1 + .05 * jit(d, 16)) } : {}),
       ...(d % 7 === 0 ? { speech_wpm: Math.round(162 - 21 * f + 2 * jit(d, 8)) } : {}),
       ddk_rate: 6.4 - 1.2 * f + .15 * jit(d, 5), ddk_cv: 11 + 3 * f + 1 * jit(d, 6), gait_cadence: 108 - 4 * f + 1.5 * jit(d, 7) };
     const { recs: r } = Measures.fromSession(patient, v, { t: Math.min(t, now - 36e5), source: "companion", session: `${patient}-c${d}`, now });

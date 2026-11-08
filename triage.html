@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Patients - NeuroMotion</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500&family=Doto:wght@700&family=Space+Grotesk:wght@500;600&display=swap">
+<link rel="stylesheet" href="theme.css">
+<style>
+  .wrap { max-width:860px; margin:0 auto; padding:4px 0 60px; min-width:0; } h1 { font-size:30px; margin:6px 0 2px; } .sub { color:var(--mute); font-size:14px; }
+  .card { padding:20px 24px; margin-top:16px; } h2 { font-size:17px; margin:0 0 4px; } .note { font-size:13px; color:var(--mute); margin:0 0 10px; line-height:1.5; }
+  input.tx { font:inherit; padding:11px 14px; border-radius:14px; border:1px solid var(--line); background:rgba(255,255,255,.7); color:#16191a; width:100%; max-width:260px; }
+  .grid2 { display:grid; grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); gap:10px 14px; } .grid2 label { font-size:13px; color:var(--mute); } .grid2 input { margin-top:4px; max-width:none; }
+  .row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; } .btn { padding:12px 20px; font-size:15px; }
+  .msg { font-size:14px; min-height:1.3em; margin-top:8px; } .msg.bad { color:var(--bad); } .msg.ok { color:var(--ok); }
+  .tier { display:inline-block; padding:8px 16px; border-radius:99px; font:600 14px var(--f-mono); letter-spacing:.03em; }
+  .t0 { background:var(--sage-l); color:var(--sage-d); } .t1 { background:rgba(201,138,29,.14); color:var(--warn); } .t2 { background:rgba(201,138,29,.25); color:#8a5a00; } .t3 { background:rgba(194,69,58,.16); color:var(--bad); }
+  .res ul { margin:6px 0 12px; padding-left:20px; line-height:1.55; } .res h3 { font:500 12px var(--f-mono); letter-spacing:.06em; text-transform:uppercase; color:var(--mute); margin:16px 0 4px; }
+  .emerg { background:rgba(194,69,58,.12); border:1px solid var(--bad); border-radius:14px; padding:14px 16px; color:var(--bad); font-weight:500; line-height:1.5; }
+  .warnbox { background:rgba(201,138,29,.14); border-radius:14px; padding:10px 14px; margin:10px 0; font-size:14px; }
+  .fine { font-size:12px; color:var(--mute); line-height:1.5; margin-top:12px; }
+  code { font:12px var(--f-mono); background:var(--sage-l); padding:2px 6px; border-radius:6px; word-break:break-all; }
+</style>
+</head>
+<body>
+<div class="shell"><aside class="side" id="navmount" data-active="triage"></aside>
+<main class="wrap">
+  <h1>Patients</h1>
+  <div class="sub">Create a code, send the patient their link, and choose what the check-in chat asks. The symptom questionnaire is part of the patient's first check-in on their phone, not something to fill in here.</div>
+
+  <div class="glass card"><h2>Patient code</h2><p class="note">A study code only: no name, date of birth, health card number or MRN.</p>
+    <div class="row"><input class="tx" id="code" placeholder="e.g. PT-4K7M" autocomplete="off" autocapitalize="characters"><button class="btn ghost" id="suggest" type="button">Suggest a code</button><button class="btn" id="go" type="button">Get check-in link</button></div>
+    <p class="msg" id="cmsg"></p></div>
+
+  <div class="glass card" id="after" hidden>
+    <h2>Check-in link</h2>
+    <p class="note">The patient opens this on their phone. The first time, they answer the symptom questions, then go straight to the chat, the three sounds and the hand movements. It only works with their code.</p>
+    <div class="row"><code id="link"></code><button class="btn ghost" id="copy" type="button">Copy link</button><a class="btn ghost" id="rep" href="#">Open doctor report</a></div>
+
+    <h2 style="margin-top:22px">Symptom screen from the patient</h2>
+    <p class="note" id="scrnote">Checking...</p>
+    <div class="res" id="scr"></div>
+    <div class="row" style="margin-top:8px"><button class="btn ghost" id="refresh" type="button">Refresh</button></div>
+
+    <h2 style="margin-top:22px">Check-in conversation</h2>
+    <p class="note">The check-in starts with a friendly chat with a voice assistant, so it feels like talking to a person and not taking a test. It asks the questions below one at a time, in its own words, and follows up on what the patient says. Speaking rate is worked out from how fast they talk. One question per line, up to 12. Leave it empty to use the suggested questions.</p>
+    <textarea id="qs" rows="6" spellcheck="true" style="width:100%;font:inherit;padding:10px 12px;border-radius:14px;border:1px solid var(--line);background:rgba(255,255,255,.7);color:var(--ink);resize:vertical" aria-label="Questions for the check-in conversation"></textarea>
+    <div class="row" style="margin-top:8px"><button class="btn" id="saveq" type="button">Save questions</button><button class="btn ghost" id="defq" type="button">Use suggested questions</button></div>
+    <p class="msg" id="qmsg"></p>
+
+    <h2 style="margin-top:22px">Add clinic values (optional)</h2>
+    <p class="note">Anything measured in clinic today. Leave blanks empty. These go into the same record as the phone check-ins.</p>
+    <div class="grid2" id="bio"></div>
+    <div class="row" style="margin-top:12px"><button class="btn" id="savebio" type="button">Save values and compare</button></div>
+    <p class="msg" id="bmsg"></p><div id="comb"></div>
+  </div>
+  <p class="fine">Symptom rules adapted from the team's als_triage.py (the JavaScript port is checked against the Python on hundreds of random cases). The patient answers on their phone, so these are self-reported answers, not an examination. Prototype decision-support aid. It does not diagnose ALS and cannot replace clinical judgement or specialist evaluation.</p>
+</main></div>
+<script src="nav.js"></script>
+<script src="measures.js"></script>
+<script src="triage.js"></script>
+<script src="reference.js"></script>
+<script src="companion-api.js"></script>
+<script src="convo.js"></script>
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+const esc = t => String(t).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+async function api(path, body) {
+  const r = await fetch(path, body === undefined ? {} : { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  let j = null; try { j = await r.json(); } catch (e) {} if (!r.ok) throw Object.assign(new Error((j && j.error) || "request failed (" + r.status + ")"), { status: r.status }); return j;
+}
+let code = null;
+$("suggest").onclick = () => { const c = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; $("code").value = "PT-" + Array.from(crypto.getRandomValues(new Uint8Array(4)), b => c[b % c.length]).join(""); };
+
+// ---- what the patient reported on their phone: the newest self-report for this code
+function renderScreen(rec) {
+  window.__tier = null; const R = $("scr");
+  if (!rec) { $("scrnote").textContent = "Waiting for the patient to finish setup on their phone. Press Refresh once they have."; R.innerHTML = ""; return; }
+  const when = new Date(rec.t).toLocaleString(), r = Triage.evaluate(rec.answers || {});
+  $("scrnote").textContent = `Self-reported by the patient on ${when}. Answers, not an examination.`;
+  if (r.emergency) { R.innerHTML = `<div class="emerg">The patient reported a sudden, stroke-like onset. ${esc(r.message)} Contact the patient now. They were told on their phone to get urgent help and not to continue the check-in.</div>`; return; }
+  window.__tier = r.tier;
+  R.innerHTML = `<span class="tier t${r.tier}">${esc(r.tierLabel)}</span>` +
+    (r.timeSensitive ? `<div class="warnbox"><b>Time-sensitive.</b> ${esc(r.timeSensitive)}</div>` : "") +
+    (r.reasons.length ? `<h3>Why</h3><ul>${r.reasons.map(x => `<li>${esc(x)}</li>`).join("")}</ul>` : "") +
+    (r.atypical.length ? `<h3>Atypical features (do not lower the flag)</h3><ul>${r.atypical.map(x => `<li>${esc(x)}</li>`).join("")}</ul>` : "") +
+    `<h3>Risk factors reported</h3>` + (r.risks.length ? `<ul>${r.risks.map(x => `<li>${esc(x.text)} <span class="mute">(${esc(x.tag)})</span></li>`).join("")}</ul>` : `<p class="note">None reported.</p>`) +
+    (r.steps.length ? `<h3>Suggested next steps</h3><ul>${r.steps.map(x => `<li>${esc(x)}</li>`).join("")}</ul>` : "") +
+    `<p class="fine">${r.notes.map(esc).join(" ")} The exam-only finding (brisk reflexes, Hoffmann or Babinski) is not asked on the phone, so it is not counted here.</p>`;
+}
+async function loadScreen() {
+  if (!code) return; $("scrnote").textContent = "Checking...";
+  try { const recs = await api("/api/triage?patient=" + encodeURIComponent(code)); renderScreen(recs.sort((a, b) => b.t - a.t)[0] || null); }
+  catch (e) { $("scrnote").textContent = "Could not load: " + e.message; $("scr").innerHTML = ""; }
+}
+$("refresh").onclick = loadScreen;
+
+// ---- the doctor's questions for the phone check-in chat (stored per patient code; empty = suggested ones)
+const setQ = (list, msg, cls = "msg") => { $("qs").value = list.join("\n"); $("qmsg").textContent = msg || ""; $("qmsg").className = cls; };
+async function loadQuestions() {
+  try { const j = await api("/api/conversation-plan?patient=" + encodeURIComponent(code)); setQ(j.questions, j.isDefault ? "These are the suggested questions. Edit them and save to make them this patient's." : "Saved questions for this patient."); }
+  catch (e) { setQ(Convo.DEFAULT_QUESTIONS, "Could not load saved questions (" + e.message + "). Showing the suggested ones."); }
+}
+$("saveq").onclick = async () => {
+  const m = $("qmsg"); m.className = "msg"; if (!code) { m.textContent = "Enter a patient code first."; m.className = "msg bad"; return; }
+  const typed = $("qs").value.split(/\r?\n/).filter(l => l.trim()).length;
+  if (typed > Convo.MAX_QUESTIONS) { m.textContent = `That is ${typed} questions; the limit is ${Convo.MAX_QUESTIONS}. Remove some and save again.`; m.className = "msg bad"; return; }
+  $("saveq").disabled = true; m.textContent = "Saving...";
+  try { const j = await api("/api/conversation-plan", { patient: code, questions: Convo.cleanQuestions($("qs").value).questions }); setQ(j.questions, j.isDefault ? "Nothing entered, so the suggested questions will be used." : `Saved ${j.questions.length} question${j.questions.length > 1 ? "s" : ""} for this patient.`, "msg ok"); }
+  catch (e) { m.textContent = "Could not save: " + e.message; m.className = "msg bad"; }
+  finally { $("saveq").disabled = false; }
+};
+$("defq").onclick = () => { $("qs").value = Convo.DEFAULT_QUESTIONS.join("\n"); $("qmsg").textContent = "Suggested questions loaded. Press Save to keep them."; $("qmsg").className = "msg"; };
+
+// ---- link, then everything for this patient
+const BIO = ["grip_kg_r", "grip_kg_l", "pinch_kg_r", "pinch_kg_l", "speech_wpm", "walk10m_s", "nfl_pgml", "ck", "fvc_sit_pct", "fvc_sup_pct", "snip_cmh2o"];
+$("bio").innerHTML = BIO.map(id => { const m = Measures.METRICS[id]; return `<label>${esc(m.label)}${/_r$/.test(id) ? " (right)" : /_l$/.test(id) ? " (left)" : ""} <span class="mute">${esc(m.unit)}</span><input class="tx" type="number" step="any" data-b="${id}" inputmode="decimal"></label>`; }).join("");
+function showAfter(c) {
+  code = c; $("after").hidden = false; const url = location.origin + "/session.html?patient=" + encodeURIComponent(c);
+  $("link").textContent = url; $("rep").href = "compare.html?patient=" + encodeURIComponent(c); $("comb").innerHTML = ""; $("bmsg").textContent = "";
+  $("copy").textContent = "Copy link"; $("copy").onclick = async () => { try { await navigator.clipboard.writeText(url); $("copy").textContent = "Copied"; } catch (e) { $("copy").textContent = "Select and copy the link"; } };
+  loadScreen(); loadQuestions();
+}
+$("go").onclick = () => {
+  const c = $("code").value.trim(), m = $("cmsg"); m.className = "msg";
+  if (!/^[A-Za-z0-9_-]{2,32}$/.test(c) || /^\d{6,}$/.test(c)) { m.textContent = "Enter a de-identified patient code (2-32 letters, numbers, - or _; not an MRN)."; m.className = "msg bad"; $("code").focus(); return; }
+  m.textContent = ""; showAfter(c);
+};
+$("code").addEventListener("keydown", e => { if (e.key === "Enter") $("go").click(); });
+const MIN_SIMILAR = 2;   // markers in or toward the ALS range needed to call the biomarker profile ALS-like (placeholder: the teammate's als_screener.py, which defines the original threshold, was not available)
+$("savebio").onclick = async () => {
+  const vals = {}; document.querySelectorAll("input[data-b]").forEach(i => { if (i.value !== "") vals[i.dataset.b] = Number(i.value); }); const m = $("bmsg"); m.className = "msg";
+  if (!Object.keys(vals).length) { m.textContent = "Enter at least one value."; m.className = "msg bad"; return; }
+  try { const r = await Companion.save(code, vals, { source: "clinic" }); m.textContent = `Saved ${r.saved} value(s)` + (r.rejected && r.rejected.length ? "; not saved: " + r.rejected.join("; ") : "") + "."; m.className = "msg ok"; }
+  catch (e) { m.textContent = "Could not save: " + e.message; m.className = "msg bad"; return; }
+  const E = Reference.evaluate(vals), S = E.summary, like = S.inAls + S.towardAls, tier = window.__tier, both = tier != null && tier >= 2, noScreen = tier == null;
+  const msg = noScreen ? "The patient has not finished the symptom questions on their phone yet, so this compares the values only. Press Refresh above once they have."
+    : both && like >= MIN_SIMILAR ? "Symptoms AND biomarkers both point toward an ALS-like profile. Recommend expedited specialist review."
+    : both ? "Symptoms suggest an ALS-type pattern; the values entered do not strongly confirm it. Symptoms alone still justify follow-up. Consider the tests left blank."
+    : like >= MIN_SIMILAR ? "Biomarkers look ALS-like despite a weak symptom pattern. Re-take the symptom history carefully and consider neurology input."
+    : "Neither the symptom screen nor the values entered show a strong ALS-like pattern. Re-evaluate if anything changes.";
+  $("comb").innerHTML = `<div class="res"><h3>Combined impression</h3><ul><li>Symptom flag: ${noScreen ? "not reported yet" : esc(Triage.TIERS[tier])}</li><li>Biomarkers: ${like} of ${S.measured} measured markers are in or toward the ALS range</li></ul><p>${esc(msg)}</p><p class="fine">Compared with the control and ALS reference values in the project table. Not a diagnosis.</p></div>`;
+};
+const pre = new URLSearchParams(location.search).get("patient"); if (pre) { $("code").value = pre; $("go").click(); }
+</script>
+</body>
+</html>

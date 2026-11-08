@@ -18,7 +18,7 @@
   #fig{flex:1;min-height:340px}
   .legend{display:flex;gap:10px;font-size:12px;color:var(--mute);justify-content:center;margin-top:6px}
   .legend i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:4px}
-  #regionPanel{margin-top:10px;padding:12px 14px;border-radius:18px;background:var(--sage-l);font-size:13px;min-height:84px}
+  #regionPanel{margin-top:10px;padding:12px 14px;border-radius:18px;background:var(--sage-l);border:1px solid var(--glass-line);font-size:13px;min-height:84px}
   .head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
   .head h1{font-size:30px} .head .who{margin-top:2px;font-size:14px}
   .head .acts{display:flex;align-items:center;gap:10px;flex-shrink:0}
@@ -27,57 +27,68 @@
   .main{display:grid;grid-template-columns:1fr 1fr 150px 150px;gap:14px;min-width:0;align-content:start}
   .head{grid-column:1/-1}
   .strip{grid-column:1/3;padding:6px 4px 0;display:flex;flex-direction:column;justify-content:space-between}
-  .nums{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
-  .num{position:relative;padding-top:22px}
-  .num .pill{position:absolute;top:0;right:0;background:rgba(255,255,255,.85);color:#16191a;font:500 10px var(--f-body);padding:2px 8px}
-  .num .v{font-size:32px;line-height:1.1}
+  .nums{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+  .num{position:relative;padding:34px 12px 10px;border:1px solid var(--glass-line);border-radius:16px;background:rgba(255,255,255,.35)}
+  .num .pill{position:absolute;top:9px;right:9px;font:500 10px var(--f-body);padding:2px 8px;border:1px solid var(--glass-line)}
+  .tone-ok{background:rgba(61,122,75,.14)!important;color:var(--ok)!important;border-color:rgba(61,122,75,.4)!important} .tone-warn{background:rgba(183,121,26,.15)!important;color:var(--warn)!important;border-color:rgba(183,121,26,.4)!important} .tone-bad{background:rgba(191,59,48,.13)!important;color:var(--bad)!important;border-color:rgba(191,59,48,.4)!important}
+  .num.tone-ok{border-color:rgba(61,122,75,.35)!important} .num.tone-warn{border-color:rgba(183,121,26,.35)!important} .num.tone-bad{border-color:rgba(191,59,48,.38)!important}
+  .num.tone-ok,.num.tone-warn,.num.tone-bad{background:rgba(255,255,255,.35)!important;color:inherit!important}
+  .num .v{font-size:30px;line-height:1.1}
   .num .v small{font:400 12px var(--f-body);color:var(--mute);margin-left:2px}
   .num .l{font-size:11.5px;color:var(--mute);margin-top:2px}
   .segs{display:flex;align-items:center;gap:6px;height:36px;margin:22px 0 8px;position:relative}
-  .segs .sg{flex:1 1 0;height:15px;border-radius:8px;background:rgba(95,122,92,.5);min-width:8px}
-  .segs .sg.fut{background:rgba(95,122,92,.22)}
-  .segs .cur{flex:0 0 auto;position:relative;display:flex;align-items:center;gap:14px;padding:7px 12px;border-radius:14px;background:rgba(112,138,110,.92);color:#fff;box-shadow:0 4px 12px rgba(60,80,60,.2)}
+  .segs .sg{flex:1 1 0;height:15px;border-radius:8px;background:rgba(90,102,93,.5);min-width:8px}
+  .segs .sg.fut{background:rgba(90,102,93,.2)}
+  .segs .cur{flex:0 0 auto;position:relative;display:flex;align-items:center;gap:14px;padding:7px 12px;border-radius:14px;background:rgba(70,80,73,.95);color:#fff;box-shadow:0 4px 12px rgba(60,80,60,.2)}
   .segs .cur b{display:block;font:600 17px/1 var(--f-head);letter-spacing:-.01em}
   .segs .cur small{display:block;font:400 9px/1.2 var(--f-body);opacity:.85;margin-top:2px;white-space:nowrap}
   .segs .cur em{font-style:normal;font-size:13px;opacity:.9}
   .segs .segtag{position:absolute;top:-21px;left:50%;transform:translateX(-50%);font:500 10px/1 var(--f-mono);background:var(--pill);color:var(--page);padding:4px 9px;border-radius:99px;white-space:nowrap}
+  .segs{touch-action:pan-y}
+  .segs .sg{transition:transform .12s,background .12s} .segs .sg.hl{background:rgba(38,48,42,.9);transform:scaleY(1.45)}
+  .segs .cur{transition:transform .12s} .segs .cur.hl{transform:translateY(-2px)}
+  #cSpeech{margin-bottom:16px}   /* lift the bars clear of the Latest / Baseline / Status boxes */
   .ai,.score{padding:16px 14px;display:flex;flex-direction:column;align-items:center;text-align:center;min-height:180px}
   .ai h3,.score h3{font-size:15px}
-  .ai{background:linear-gradient(170deg,rgba(255,255,255,.55),rgba(169,189,164,.8))}
+  .ai{background:linear-gradient(170deg,rgba(255,255,255,.45),rgba(170,177,170,.7))}
   @media (prefers-color-scheme:dark){:root:not([data-theme=light]) .ai{background:linear-gradient(170deg,rgba(255,255,255,.08),rgba(95,122,92,.55))}}
-  .orb{width:38px;height:38px;border-radius:50%;margin:10px 0 8px;background:radial-gradient(circle at 35% 30%,#fff,#bfe3b8 45%,#6f8a6c);box-shadow:0 8px 18px rgba(80,120,80,.35)}
+  .orb{width:38px;height:38px;border-radius:50%;margin:10px 0 8px;background:radial-gradient(circle at 35% 30%,#f3f5f3,#b4bfb3 45%,#5d695f);box-shadow:0 6px 14px rgba(40,50,44,.25)}
   .ai p{margin:0;font-size:11.5px;line-height:1.45}
   .score .big{font-size:50px;line-height:1;margin-top:14px}
   .score .of{margin:6px 0 10px;width:70%;border-top:1px solid var(--line);padding-top:4px;color:var(--mute);font:500 13px var(--f-mono)}
   .score .pill{background:var(--pill);color:var(--page);padding:5px 12px;font-size:11px;margin-top:auto}
   /* green trend cards */
-  .tc{padding:16px 16px 14px;display:flex;flex-direction:column;min-height:250px;position:relative;background:linear-gradient(180deg,rgba(111,138,108,.55),rgba(190,208,186,.55))}
+  .tc{padding:16px 16px 14px;display:flex;flex-direction:column;min-height:250px;position:relative;background:linear-gradient(180deg,rgba(125,135,127,.45),rgba(205,210,205,.5))}
   .tc h3{font-size:16px;color:#16191a} .tc .sub{font-size:11.5px;color:rgba(22,25,26,.6)}
   .tc canvas{flex:1;width:100%;min-height:110px;display:block}
-  .arrow{position:absolute;top:12px;right:12px;width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.55);display:flex;align-items:center;justify-content:center;font-size:12px;color:#16191a;text-decoration:none}
+  .arrow{position:absolute;top:12px;right:12px;width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.55);border:1px solid var(--glass-line);display:flex;align-items:center;justify-content:center;font-size:12px;color:#16191a;text-decoration:none}
   .chips{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
-  .chip{background:rgba(255,255,255,.5);border-radius:10px;padding:5px 8px;font-size:10px;color:rgba(22,25,26,.6)}
+  .chip{background:rgba(255,255,255,.5);border:1px solid var(--glass-line);border-radius:10px;padding:5px 8px;font-size:10px;color:rgba(22,25,26,.6)}
+  .chip.tone-ok{border-color:rgba(61,122,75,.4)} .chip.tone-warn{border-color:rgba(183,121,26,.4)} .chip.tone-bad{border-color:rgba(191,59,48,.4)}
+  .chip.tone-ok b{color:var(--ok)} .chip.tone-warn b{color:var(--warn)} .chip.tone-bad b{color:var(--bad)}
   .chip b{display:block;font:500 12px var(--f-body);color:#16191a;margin-top:1px;white-space:nowrap}
-  .tip{position:absolute;font:500 10px var(--f-body);background:rgba(255,255,255,.85);color:#16191a;padding:3px 9px;border-radius:99px;white-space:nowrap}
+  .tip{position:absolute;pointer-events:none;font:500 11px/1.35 var(--f-body);background:rgba(27,31,29,.92);color:#f2f3f1;padding:6px 10px;border-radius:10px;white-space:nowrap;z-index:5;opacity:0;transition:opacity .12s;box-shadow:0 4px 14px rgba(0,0,0,.2)}
+  .tip.on{opacity:1} .tip b{display:block;font-weight:500;opacity:.7;font-size:10px;margin-bottom:1px}
+  .tc canvas{cursor:crosshair;touch-action:none}
   /* biomarker overview */
   .bm{grid-column:3/5;padding:16px;display:flex;flex-direction:column}
   .bm h3{font-size:15px} .bm .sub{font-size:11.5px;color:var(--mute);margin-top:2px}
   .bm .arrow{background:var(--card)}
-  .bm .row{display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid var(--line);font-size:12.5px}
-  .bm .row:last-child{border-bottom:0}
+  .bm .row{display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--glass-line);border-radius:12px;margin-bottom:6px;background:rgba(255,255,255,.3);font-size:12.5px}
+  .bm .row:last-child{margin-bottom:0}
   .bm .row small{color:var(--mute);font-size:10px}
-  .st{font:500 10.5px var(--f-body);padding:3px 10px;border-radius:99px;background:rgba(255,255,255,.8);color:#16191a;border:1px solid var(--line);min-width:56px;text-align:center}
+  .st{font:500 10.5px var(--f-body);padding:3px 10px;border-radius:99px;background:rgba(255,255,255,.6);color:#16191a;border:1px solid var(--line);min-width:56px;text-align:center}
   .st.hi{background:var(--pill);color:var(--page);border-color:var(--pill)}
   @media (prefers-color-scheme:dark){:root:not([data-theme=light]) .st{background:rgba(255,255,255,.1);color:var(--ink)}}
   /* bottom row */
   .sys{grid-column:1/3;padding:16px;position:relative}
   .rings{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}
-  .ringc{text-align:center;font-size:11px;color:var(--mute)}
+  .ringc{text-align:center;font-size:11px;color:var(--mute);border:1px solid var(--glass-line);border-radius:16px;padding:10px 4px 8px;background:rgba(255,255,255,.3)}
   .ringc svg{width:62px;height:62px;display:block;margin:0 auto 4px}
   .ringc b{position:absolute}
   .up{grid-column:3/5;padding:16px;position:relative}
   .up h3,.sys h3{font-size:15px} .up .sub,.sys .sub{font-size:11.5px;color:var(--mute);margin-top:2px}
-  .upi{padding:10px 0;font-size:12.5px;border-top:1px solid var(--line);margin-top:8px} .upi:first-of-type{margin-top:10px}
+  .upi{padding:10px 12px;font-size:12.5px;border:1px solid var(--glass-line);border-radius:14px;margin-top:8px;background:rgba(255,255,255,.3)} .upi:first-of-type{margin-top:10px}
   .upi b{display:block;font-weight:500} .upi span{color:var(--mute);font-size:11px}
   @media(max-width:1100px){.app{grid-template-columns:1fr;padding:12px}.body{position:static;height:560px}aside:first-child{position:static;height:auto;min-height:0;margin-right:0}nav{display:flex;gap:8px;flex-wrap:wrap}nav a{margin-bottom:0}.side-note{display:none}.main{grid-template-columns:1fr 1fr}.strip{grid-column:1/-1}.bm,.sys,.up{grid-column:1/-1}}
   @media(min-width:1101px){.main{order:2}.body{order:3}}
@@ -98,8 +109,8 @@
     <div class="glass ai"><h3>AI Insights</h3><div class="orb"></div><p id="aiText"></p></div>
     <div class="glass score"><h3>Motor Score</h3><div class="big dot" id="score">--</div><div class="of">100</div><span class="pill" id="scoreTag"></span></div>
 
-    <div class="glass tc"><a class="arrow" href="compare.html">&#8599;</a><h3>Grip Trend</h3><div class="sub">Weekly grip strength.</div><canvas id="cGrip"></canvas><div class="chips" id="chGrip"></div></div>
-    <div class="glass tc"><a class="arrow" href="compare.html">&#8599;</a><h3>Speech Rate</h3><div class="sub">Pa-ta-ka syllables per second.</div><canvas id="cSpeech"></canvas><div class="chips" id="chSpeech"></div></div>
+    <div class="glass tc"><a class="arrow" href="compare.html">&#8599;</a><h3>Grip Trend</h3><div class="sub">Weekly grip strength. Hover or tap a week.</div><canvas id="cGrip"></canvas><div class="tip" id="tGrip"></div><div class="chips" id="chGrip"></div></div>
+    <div class="glass tc"><a class="arrow" href="compare.html">&#8599;</a><h3>Speech Rate</h3><div class="sub">Pa-ta-ka syllables per second. Hover or tap a bar.</div><canvas id="cSpeech"></canvas><div class="tip" id="tSpeech"></div><div class="chips" id="chSpeech"></div></div>
     <div class="glass bm"><div style="display:flex;justify-content:space-between"><div><h3>Biomarker Overview</h3><div class="sub">Motor and lab markers.</div></div></div><div id="bio" style="margin-top:6px"></div></div>
 
     <div class="glass sys"><h3>Body Systems</h3><div class="sub">How each system is holding up against Alex's own baseline.</div><div class="rings" id="rings"></div></div>
@@ -130,24 +141,62 @@ const $=id=>document.getElementById(id);
 let A=null;
 function setup(c){const r=devicePixelRatio||1,w=c.clientWidth,h=c.clientHeight;c.width=w*r;c.height=h*r;const g=c.getContext("2d");g.scale(r,r);return{g,w,h}}
 function smooth(g,pts){g.beginPath();g.moveTo(pts[0][0],pts[0][1]);for(let i=1;i<pts.length;i++){const[a,b]=pts[i-1],[c,d]=pts[i],mx=(a+c)/2;g.bezierCurveTo(mx,b,mx,d,c,d)}g.stroke()}
-function drawGrip(){const R=A.series.gripR,L=A.series.gripL,{g,w,h}=setup($("cGrip")),all=[...R,...L],pad=(Math.max(...all)-Math.min(...all))*.1||1,lo=Math.min(...all)-pad,hi=Math.max(...all)+pad,N=Math.max(R.length,L.length),X=i=>8+i*(w-16)/Math.max(1,N-1),Y=v=>h-6-(v-lo)/(hi-lo)*(h-16);
- g.lineWidth=2.5;g.strokeStyle="rgba(255,255,255,.95)";smooth(g,R.map((v,i)=>[X(i),Y(v)]));
- g.setLineDash([3,4]);g.lineWidth=2;g.strokeStyle="rgba(255,255,255,.85)";smooth(g,L.map((v,i)=>[X(i),Y(v)]));g.setLineDash([]);
- g.fillStyle="#fff";g.beginPath();g.arc(X(R.length-1),Y(R[R.length-1]),4,0,7);g.fill()}
-function drawSpeech(){const d=A.series.ddk,{g,w,h}=setup($("cSpeech")),hi=Math.max(...d)*1.05,bw=(w-16)/d.length;
- d.forEach((v,i)=>{const bh=v/hi*(h-8);g.fillStyle=i===d.length-1?"#fff":"rgba(255,255,255,.55)";const x=8+i*bw+bw*.18,ww=bw*.64,y=h-bh;g.beginPath();g.roundRect?g.roundRect(x,y,ww,bh,4):g.rect(x,y,ww,bh);g.fill()})}
+const INK="#26302a",INK2="#6b756c",GRID="rgba(38,48,42,.12)";
+const tone=w=>/declin|slow|high|elevat|^low|marked|bad/i.test(w)?"tone-bad":/watch|borderline/i.test(w)?"tone-warn":/stable|good|normal|steady/i.test(w)?"tone-ok":"";
+const CH={grip:{hov:-1,pin:-1},speech:{hov:-1,pin:-1}};
+const unitG=()=>A&&A.source==="demo"?" kg":"", fmtV=v=>(Math.abs(v)>=10?v.toFixed(1):v.toFixed(2));
+function drawGrip(){const R=A.series.gripR,L=A.series.gripL,{g,w,h}=setup($("cGrip")),all=[...R,...L],pad=(Math.max(...all)-Math.min(...all))*.1||1,lo=Math.min(...all)-pad,hi=Math.max(...all)+pad,N=Math.max(R.length,L.length),X=i=>8+i*(w-16)/Math.max(1,N-1),Y=v=>h-6-(v-lo)/(hi-lo)*(h-16),st=CH.grip,k=st.hov>=0?st.hov:st.pin;
+ g.lineWidth=1;g.strokeStyle=GRID;for(let j=0;j<4;j++){const y=6+j*(h-16)/3;g.beginPath();g.moveTo(8,y);g.lineTo(w-8,y);g.stroke()}
+ g.lineWidth=2.5;g.strokeStyle=INK;smooth(g,R.map((v,i)=>[X(i),Y(v)]));
+ g.setLineDash([3,4]);g.lineWidth=2;g.strokeStyle=INK2;smooth(g,L.map((v,i)=>[X(i),Y(v)]));g.setLineDash([]);
+ if(k<0){g.fillStyle=INK;g.beginPath();g.arc(X(R.length-1),Y(R[R.length-1]),4,0,7);g.fill()}
+ else{g.strokeStyle="rgba(38,48,42,.35)";g.lineWidth=1;g.beginPath();g.moveTo(X(k),4);g.lineTo(X(k),h-4);g.stroke();
+  if(R[k]!=null){g.fillStyle=INK;g.beginPath();g.arc(X(k),Y(R[k]),5,0,7);g.fill()}
+  if(L[k]!=null){g.fillStyle="#fff";g.strokeStyle=INK2;g.lineWidth=2;g.beginPath();g.arc(X(k),Y(L[k]),4.5,0,7);g.fill();g.stroke()}}
+ const tip=$("tGrip");
+ if(k<0)tip.classList.remove("on");else{const u=unitG();tip.innerHTML=`<b>Week ${k+1}${st.pin===k&&st.hov<0?" (pinned)":""}</b>Right ${R[k]!=null?fmtV(R[k])+u:"-"}<br>Left ${L[k]!=null?fmtV(L[k])+u:"-"}`;tip.classList.add("on");
+  const c=$("cGrip"),ox=c.offsetLeft,oy=c.offsetTop,tw=tip.offsetWidth;let x=ox+X(k)-tw/2;x=Math.max(ox,Math.min(ox+w-tw,x));tip.style.left=x+"px";tip.style.top=Math.max(oy-4,oy+Math.min(Y(R[k]??lo),Y(L[k]??lo))-tip.offsetHeight-10)+"px"}}
+function drawSpeech(){const d=A.series.ddk,{g,w,h}=setup($("cSpeech")),hi=Math.max(...d)*1.05,bw=(w-16)/d.length,st=CH.speech,k=st.hov>=0?st.hov:st.pin;
+ d.forEach((v,i)=>{const bh=v/hi*(h-8);g.fillStyle=i===k?INK:i===d.length-1&&k<0?INK:"rgba(38,48,42,.32)";const x=8+i*bw+bw*.18,ww=bw*.64,y=h-bh;g.beginPath();g.roundRect?g.roundRect(x,y,ww,bh,4):g.rect(x,y,ww,bh);g.fill()});
+ const tip=$("tSpeech");
+ if(k<0)tip.classList.remove("on");else{const base=d[0],pc=Math.round(100*d[k]/base);tip.innerHTML=`<b>Week ${k+1}${st.pin===k&&st.hov<0?" (pinned)":""}</b>${d[k].toFixed(1)} syll/s<br>${pc}% of week 1`;tip.classList.add("on");
+  const c=$("cSpeech"),ox=c.offsetLeft,oy=c.offsetTop,tw=tip.offsetWidth;let x=ox+8+k*bw+bw/2-tw/2;x=Math.max(ox,Math.min(ox+w-tw,x));tip.style.left=x+"px";tip.style.top=Math.max(oy-4,oy+h-d[k]/hi*(h-8)-tip.offsetHeight-8)+"px"}}
 function drawAll(){if(!A)return;drawGrip();drawSpeech()}
+function wire(id,key,n,draw){const c=$(id),st=CH[key],idx=e=>{const r=c.getBoundingClientRect(),N=n();if(!N)return-1;const x=e.clientX-r.left,w=r.width;return Math.max(0,Math.min(N-1,Math.round(key==="grip"?(x-8)/Math.max(1,w-16)*Math.max(1,N-1):(x-8)/((w-16)/N)-.5)))};
+ c.addEventListener("pointermove",e=>{if(!A)return;const i=idx(e);if(i!==st.hov)setWeek(i)});          // hovering one chart moves the other chart and the week strip to the same week
+ c.addEventListener("pointerleave",()=>{if(st.hov!==-1&&A)setWeek(-1)});
+ c.addEventListener("click",e=>{if(!A)return;const i=idx(e);st.pin=st.pin===i?-1:i;draw()})}
+wire("cGrip","grip",()=>A?Math.max(A.series.gripR.length,A.series.gripL.length):0,()=>drawGrip());
+wire("cSpeech","speech",()=>A?A.series.ddk.length:0,()=>drawSpeech());
+// ---- week strip: hover (or drag on a phone) along the pills to look at any week; both charts jump to that week
+const segs=$("segs"); let stripHov=-1;
+function weekInfo(k){const s=A.series,R=s.gripR[k],L=s.gripL[k],D=s.ddk[k],p=[[R,s.gripR[0]],[L,s.gripL[0]],[D,s.ddk[0]]].filter(x=>x[0]!=null&&x[1]>0).map(x=>100*x[0]/x[1]);
+ return{R,L,D,trend:p.length?Math.round(p.reduce((a,b)=>a+b,0)/p.length):null}}   // trend = the three charted series as % of week 1 (same recipe as the demo score)
+function markWeek(k,tip){
+ segs.querySelectorAll("[data-w]").forEach(el=>el.classList.toggle("hl",+el.dataset.w===k));
+ const t=$("tWeek"); if(!t)return; if(!tip||k<0||!A){t.classList.remove("on");return}
+ const u=unitG(),w=weekInfo(k),el=segs.querySelector(`[data-w="${k}"]`);
+ t.innerHTML=`<b>Week ${k+1}${k===A.weeks-1?" (now)":""}</b>${w.trend!=null?`Trend ${w.trend}% of week 1<br>`:""}Grip R ${w.R!=null?fmtV(w.R)+u:"-"} &middot; L ${w.L!=null?fmtV(w.L)+u:"-"}<br>Speech ${w.D!=null?w.D.toFixed(1)+" syll/s":"-"}`;
+ t.classList.add("on"); const tw=t.offsetWidth; let x=el.offsetLeft+el.offsetWidth/2-tw/2; x=Math.max(0,Math.min(segs.clientWidth-tw,x)); t.style.left=x+"px"; t.style.top=(-t.offsetHeight-(el.classList.contains("cur")?32:10))+"px"}
+function setWeek(k,fromStrip){
+ if(!A)return; const n=Math.max(A.series.gripR.length,A.series.gripL.length);
+ CH.grip.hov=k>=0&&k<n?k:-1; CH.speech.hov=k>=0&&k<A.series.ddk.length?k:-1;
+ drawGrip(); drawSpeech(); markWeek(k,!!fromStrip)}
+segs.addEventListener("pointermove",e=>{if(!A)return;let hit=null,best=1e9;
+ for(const c of segs.children){if(c.classList.contains("tip"))continue;const r=c.getBoundingClientRect();if(e.clientX>=r.left&&e.clientX<=r.right){hit=c;break}const d=Math.abs((r.left+r.right)/2-e.clientX);if(d<best){best=d;hit=c}}   // inside a pill wins, else the nearest one: forgiving on thin pills
+ const k=hit&&hit.dataset.w!=null?+hit.dataset.w:-1; if(k!==stripHov){stripHov=k;setWeek(k,true)}});
+segs.addEventListener("pointerleave",()=>{if(stripHov!==-1){stripHov=-1;setWeek(-1)}});
 function render(){
  $("lastvisit").textContent=`last clinic visit: ${A.visit} · ${A.source==="live"?"live data":"demo data (API not running)"}`;
  $("aiText").textContent=A.ai.text; $("aiText").title="Source: "+A.ai.by;
  $("score").textContent=A.score; $("scoreTag").textContent=A.tag;
- $("nums").innerHTML=A.nums.map(n=>`<div class="num"><span class="pill">${n[3]}</span><div class="v dot">${n[1]}<small>${n[2]}</small></div><div class="l">${n[0]}</div></div>`).join("");
- {const N=A.weeks,F=4,seg=(k,f)=>`<i class="sg${f?" fut":""}" style="flex-grow:${(f?.9-.1*k:.65+.35*k/Math.max(1,N-1)).toFixed(2)}"></i>`;
-  $("segs").innerHTML=Array.from({length:N-1},(_,k)=>seg(k,false)).join("")+`<div class="cur"><span class="segtag">Week ${N}</span><div><b>${A.score}%</b><small>Motor score vs baseline</small></div><em>${A.score>=90?"→":"↘"}</em></div>`+Array.from({length:F},(_,k)=>seg(k,true)).join("");}
- $("bio").innerHTML=A.rows.map(r=>`<div class="row"><span>${r[0]}</span><span class="mono">${r[1]} <small>${r[2]}</small></span><span class="st ${r[4]?"hi":""}">${r[3]}</span></div>`).join("");
- const chip=c=>`<div class="chip">${c[0]}<b>${c[1]}</b></div>`;
+ $("nums").innerHTML=A.nums.map(n=>`<div class="num ${tone(n[3])}"><span class="pill ${tone(n[3])}">${n[3]}</span><div class="v dot">${n[1]}<small>${n[2]}</small></div><div class="l">${n[0]}</div></div>`).join("");
+ {const N=A.weeks,F=4,seg=(k,f)=>`<i class="sg${f?" fut":""}"${f?"":` data-w="${k}"`} style="flex-grow:${(f?.9-.1*k:.65+.35*k/Math.max(1,N-1)).toFixed(2)}"></i>`;
+  $("segs").innerHTML=`<div class="tip" id="tWeek"></div>`+Array.from({length:N-1},(_,k)=>seg(k,false)).join("")+`<div class="cur" data-w="${N-1}"><span class="segtag">Week ${N}</span><div><b>${A.score}%</b><small>Motor score vs baseline</small></div><em>${A.score>=90?"→":"↘"}</em></div>`+Array.from({length:F},(_,k)=>seg(k,true)).join("");}
+ $("bio").innerHTML=A.rows.map(r=>`<div class="row"><span>${r[0]}</span><span class="mono">${r[1]} <small>${r[2]}</small></span><span class="st pill ${tone(r[3])}">${r[3]}</span></div>`).join("");
+ const chip=c=>`<div class="chip ${c[0]==="Status"?tone(c[1]):""}">${c[0]}<b>${c[1]}</b></div>`;
  $("chGrip").innerHTML=A.chips.grip.map(chip).join(""); $("chSpeech").innerHTML=A.chips.speech.map(chip).join("");
- $("rings").innerHTML=A.rings.map(s=>{const c=2*Math.PI*26,v=Math.max(0,Math.min(100,s[1])),col=v>=90?"#6f8a6c":v>=80?"#8d9a8b":"#d0574b";return `<div class="ringc"><svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="26" fill="none" stroke="rgba(22,25,26,.1)" stroke-width="5"/><circle cx="32" cy="32" r="26" fill="none" stroke="${col}" stroke-width="5" stroke-linecap="round" stroke-dasharray="${c}" stroke-dashoffset="${c*(1-v/100)}" transform="rotate(-90 32 32)"/><text x="32" y="36" text-anchor="middle" font-size="13" font-family="Space Grotesk" fill="currentColor" style="color:var(--ink)">${s[1]}%</text></svg>${s[0]}</div>`}).join("");
+ $("rings").innerHTML=A.rings.map(s=>{const c=2*Math.PI*26,v=Math.max(0,Math.min(100,s[1])),col=v>=90?"#3d7a4b":v>=80?"#b7791a":"#bf3b30";return `<div class="ringc"><svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="26" fill="none" stroke="rgba(22,25,26,.12)" stroke-width="5"/><circle cx="32" cy="32" r="26" fill="none" stroke="${col}" stroke-width="5" stroke-linecap="round" stroke-dasharray="${c}" stroke-dashoffset="${c*(1-v/100)}" transform="rotate(-90 32 32)"/><text x="32" y="36" text-anchor="middle" font-size="13" font-family="Space Grotesk" fill="currentColor" style="color:var(--ink)">${s[1]}%</text></svg>${s[0]}</div>`}).join("");
  drawAll(); if(window.V) V.setStatus(A.status);
 }
 addEventListener("resize",drawAll);

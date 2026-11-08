@@ -1,11 +1,11 @@
 /* Shared sage / glass theme for the ALS console + companion */
 :root{
-  --bg1:#c9d3c6; --bg2:#9fb09f; --page:#e9ece8;
-  --card:rgba(255,255,255,.62); --card-solid:#f4f6f3; --glass-line:rgba(255,255,255,.7);
-  --ink:#16191a; --mute:#6b756c; --line:rgba(22,25,26,.1);
-  --sage:#a9bda4; --sage-d:#6f8a6c; --sage-l:#dbe5d7; --pill:#16191a;
-  --ok:#4f8a5b; --warn:#c98a1d; --bad:#c2453a;
-  --radius:26px; --shadow:0 10px 30px rgba(60,80,60,.12);
+  --bg1:#d5d8d4; --bg2:#b7bcb6; --page:#eceeec;
+  --card:rgba(255,255,255,.5); --card-solid:#f2f3f1; --glass-line:rgba(40,50,44,.16);
+  --ink:#1b1f1d; --mute:#5f6862; --line:rgba(22,25,26,.1);
+  --sage:#b3bab1; --sage-d:#5d695f; --sage-l:#dde1dc; --pill:#16191a;
+  --ok:#3d7a4b; --warn:#b7791a; --bad:#bf3b30;
+  --radius:26px; --shadow:0 6px 20px rgba(40,50,44,.08);
   --f-head:'Space Grotesk',system-ui,sans-serif; --f-body:'DM Sans',system-ui,sans-serif; --f-mono:'DM Mono',ui-monospace,Consolas,monospace; --f-dot:'Doto','DM Mono',monospace;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme=light]){

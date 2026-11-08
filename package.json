@@ -5,7 +5,7 @@
   "description": "NeuroMotion ALS motor monitoring console and API",
   "scripts": {
     "start": "node server.js",
-    "test": "node src/test_backend.js && node src/test_storage.js && node src/test_grip.js && node src/test_labs.js",
+    "test": "node src/test_backend.js && node src/test_storage.js && node src/test_grip.js && node src/test_labs.js && node src/test_vowel.js && node src/test_kgest.js && node src/test_triage.js && node src/test_convo.js",
     "db:check": "node src/db_check.js",
     "db:seed": "node src/seed_cohort.js"
   },

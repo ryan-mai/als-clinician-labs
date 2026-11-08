@@ -173,3 +173,19 @@ ok(Object.keys(Dic.parse("hello there").values).length === 0, "nothing heard");
   a = await post(srv, { mime: "image/png", data: "A".repeat(6.5e6) }); bad2(a.s === 413, "too large -> 413 " + a.s);
   srv.close(); console.log("extract endpoint tests done");
 })();
+// ---- access key: sign-in page and short /k/KEY link ----
+(async () => {
+  const bad2 = (c, m) => { if (!c) { process.exitCode = 1; console.log("FAIL", m); } };
+  const srv = createApp({ dataFile: null, env: { SEED_DEMO: "0", ACCESS_TOKEN: "tok-abc-123" } }); await srv.ready; await new Promise(r => srv.listen(0, "127.0.0.1", r)); const base = "http://127.0.0.1:" + srv.address().port;
+  let r = await fetch(base + "/session.html", { headers: { accept: "text/html" } }), body = await r.text();
+  bad2(r.status === 401 && body.includes("<form") && body.includes('name="key"'), "browser without key gets a sign-in page");
+  r = await fetch(base + "/session.html"); bad2(r.status === 401 && !(await r.text()).includes("<form"), "non-browser request gets plain 401");
+  r = await fetch(base + "/api/health", { headers: { accept: "text/html" } }); bad2(r.status === 401 && !(await r.text()).includes("<form"), "api path never gets the form");
+  r = await fetch(base + "/k/tok-abc-123", { redirect: "manual" }); const ck = (r.headers.get("set-cookie") || "").split(";")[0];
+  bad2(r.status === 302 && r.headers.get("location") === "/session.html" && ck.startsWith("motor_access="), "short link grants access: " + r.status + " " + r.headers.get("location"));
+  r = await fetch(base + "/api/health", { headers: { cookie: ck } }); bad2(r.status === 200, "cookie from the short link works");
+  r = await fetch(base + "/k/wrong", { redirect: "manual", headers: { accept: "text/html" } }); bad2(r.status === 401, "wrong short key refused");
+  r = await fetch(base + "/session.html?key=tok-abc-123", { redirect: "manual" }); bad2(r.status === 302 && r.headers.get("location") === "/session.html", "?key= still works");
+  srv.close(); console.log("sign-in tests done");
+})();
+

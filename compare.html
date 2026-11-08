@@ -20,8 +20,35 @@
   .stack i{display:block;height:100%} .legend{display:flex;gap:18px;flex-wrap:wrap;font-size:12px;color:var(--mute)} .legend b{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:-1px}
   @media(max-width:800px){.evi{grid-template-columns:1fr;gap:14px}}
   /* row 2: upload + tall rule-out card */
-  .row2{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:16px;align-items:stretch;margin-top:16px} @media(max-width:900px){.row2{grid-template-columns:1fr}}
+  .row2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) 300px;gap:16px;align-items:stretch;margin-top:16px}
+  .row2.no-mri{grid-template-columns:minmax(0,1fr) 300px}
+  @media(max-width:1100px){.row2,.row2.no-mri{grid-template-columns:minmax(0,1fr) minmax(0,1fr)} .row2 .rule{grid-column:1/-1}}
+  @media(max-width:700px){.row2,.row2.no-mri{grid-template-columns:1fr}}
   .row2 .card{margin-top:0}
+  /* MRI card stack: click the pile to enlarge with its caption; arrows move to the next image */
+  #mri{display:flex;flex-direction:column;min-width:0} #mri h3{font-size:16px}
+  .mpile{position:relative;flex:1;min-height:250px;margin:6px 0 4px;cursor:zoom-in;outline:none;border-radius:16px}
+  .mpile:focus-visible{box-shadow:0 0 0 3px var(--sage-d)}
+  .mc{position:absolute;left:0;bottom:0;width:calc(100% - 28px);height:calc(100% - 28px);border-radius:16px;overflow:hidden;background:#0c0f0d;border:1px solid rgba(255,255,255,.5);box-shadow:0 6px 18px rgba(30,45,30,.25);transform-origin:bottom left;transition:transform .5s cubic-bezier(.4,.2,.2,1),opacity .35s ease}
+  .mc img{width:100%;height:100%;object-fit:contain;display:block;background:#0c0f0d}
+  .mc .mtag{position:absolute;left:10px;top:10px;padding:2px 10px;border-radius:99px;font:500 11px var(--f-body);background:rgba(255,255,255,.88);color:#16191a}
+  .mc[data-r="0"]{transform:none;z-index:9} .mc[data-r="1"]{transform:translate(14px,-14px);z-index:8} .mc[data-r="2"]{transform:translate(28px,-28px);z-index:7}
+  .mc:not([data-r="0"]):not([data-r="1"]):not([data-r="2"]){transform:translate(28px,-28px);z-index:1;opacity:0}
+  .mc:not([data-r="0"]) .mtag{opacity:0}
+  .mpile:hover .mc[data-r="1"]{transform:translate(17px,-17px)} .mpile:hover .mc[data-r="2"]{transform:translate(34px,-34px)}
+  .mnav{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12px;color:var(--mute);margin-top:6px;min-height:30px}
+  .mnav .mt{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mnav button,.lb button{font:500 15px var(--f-body);width:30px;height:30px;border-radius:50%;border:1px solid var(--line);background:rgba(255,255,255,.7);color:var(--ink);cursor:pointer;padding:0;flex-shrink:0}
+  .mnav button:hover,.lb button:hover{background:#fff}
+  @media (prefers-reduced-motion:reduce){.mc{transition:none}}
+  /* lightbox */
+  .lb{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(10,14,11,.82);backdrop-filter:blur(6px)}
+  .lb figure{margin:0;max-width:min(900px,100%);max-height:100%;display:flex;flex-direction:column;gap:12px;background:var(--card-solid,#f4f6f3);border-radius:22px;padding:16px;box-shadow:0 20px 60px rgba(0,0,0,.5);overflow:auto}
+  .lb img{max-width:100%;max-height:62vh;object-fit:contain;background:#0c0f0d;border-radius:14px;align-self:center}
+  .lb figcaption{font-size:14px;line-height:1.5} .lb figcaption b{font-family:var(--f-head)} .lb .lbt{font:500 11px var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--mute);margin-bottom:2px}
+  .lb .lbc{display:flex;align-items:center;justify-content:space-between;gap:10px} .lb .lbc span{font-size:12px;color:var(--mute)}
+  .lb .lbx{width:auto;border-radius:99px;padding:0 14px;font-size:13px}
+    .brief{font-size:15px;line-height:1.5;margin:12px 0 0} .brief .gl{width:20px;height:20px;vertical-align:-4px;margin-right:8px} @media(prefers-color-scheme:dark){:root:not([data-theme=light]) .brief .gl{}}
   #up{display:flex;flex-direction:column} #up .drop{flex:1;min-height:130px}
   .drop{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:6px;padding:16px 16px;border:2px dashed var(--line);border-radius:22px;cursor:pointer;background:rgba(255,255,255,.35);transition:.15s}
   .drop:hover,.drop.over{border-color:var(--sage-d);background:rgba(255,255,255,.6)}
@@ -88,7 +115,7 @@
   @page{size:Letter;margin:1in;@top-right{content:counter(page);font:12pt "Times New Roman",Times,serif}}
   @media print{
     html,body{background:#fff!important;color:#000}
-    .shell>.side,.wrap>*:not(#apa){display:none!important}
+    .shell>.side,.wrap>*:not(#apa),.lb{display:none!important}
     .shell{display:block;padding:0;max-width:none} .wrap{max-width:none;padding:0;margin:0}
     #apa{display:block;font:12pt/2 "Times New Roman",Times,serif;color:#000}
     #apa h1{font:700 12pt/2 "Times New Roman",Times,serif;text-align:center;margin:0}
@@ -108,6 +135,8 @@
     #apa .tnote{font-size:10pt;line-height:1.4;text-indent:0;margin-top:.05in;margin-bottom:.15in}
     #apa .tnote i{font-style:italic}
     #apa .refs p{padding-left:.5in;text-indent:-.5in}
+    #apa .fig{break-inside:avoid;margin:.1in 0 .2in} #apa .fig img{display:block;margin:.05in auto;max-width:3.3in;max-height:3.4in;border:.5pt solid #000}
+    #apa .fig .tt{margin-bottom:.04in}
     #apa .pb{break-before:page}
     #apa sup{font-size:8pt;line-height:0}
   }
@@ -117,7 +146,7 @@
 <div class="shell"><aside class="side" id="navmount" data-active="report"></aside>
 <div class="wrap">
   <div class="head"><div><h1>Doctor report</h1><div class="sub" id="who">Loading...</div></div>
-    <div class="acts"><button class="btn ghost" id="copy-sum">Copy summary</button><button class="btn ghost" id="copy-tbl">Copy results table</button><button class="btn" onclick="window.print()">Download Report</button></div></div>
+    <div class="acts"><button class="btn ghost" id="copy-sum">Copy summary</button><button class="btn ghost" id="copy-tbl">Copy results table</button><button class="btn" id="gen">Generate report</button></div></div>
   <div class="st" id="copy-st" style="margin-top:4px"></div>
 
   <div class="glass card evi" id="evi"></div>
@@ -133,21 +162,27 @@
       <div class="rev" id="rev"><h4 style="font:500 12px var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--mute);margin:6px 0">Found in the file</h4><table id="rev-t"></table><div class="note" id="rev-skip"></div>
         <div style="display:flex;gap:10px;margin-top:12px;justify-content:flex-end"><button class="btn ghost" id="rev-cancel">Cancel</button><button class="btn" id="rev-save">Update results</button></div></div>
     </div>
+    <div class="glass card" id="mri" hidden></div>
     <div class="glass card rule" id="rule"></div>
   </div>
 
+  <div class="glass card" id="home"></div>
   <div class="glass card" id="marks"></div>
   <p class="fine" id="fine"></p>
 
   <article id="apa" aria-label="Report document"></article>
 </div>
 </div>
+<div class="lb" id="lb" hidden role="dialog" aria-modal="true" aria-label="MRI image viewer"></div>
 <script src="nav.js"></script>
 <script src="measures.js"></script>
 <script src="dictation.js"></script>
 <script src="labfile.js"></script>
 <script src="companion-api.js"></script>
+<script src="kgest.js"></script>
+<script src="homepanel.js"></script>
 <script src="reference.js"></script>
+<script src="mri.js"></script>
 <script>
 "use strict";
 const $=id=>document.getElementById(id), esc=t=>String(t).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
@@ -183,7 +218,7 @@ function renderScreen(d,E){
   $("evi").innerHTML=`<div class="big dot">${toward} of ${S.measured}<small>measured markers are in or toward the ALS range</small></div>
    <div><div class="stack"><i style="width:${w(S.inAls)}%;background:var(--bad)"></i><i style="width:${w(S.towardAls)}%;background:var(--warn)"></i><i style="width:${w(S.beyond)}%;background:#e3b45a"></i><i style="width:${w(S.overlap)}%;background:var(--mute)"></i><i style="width:${w(S.control)}%;background:var(--ok)"></i></div>
    <div class="legend"><span><b style="background:var(--bad)"></b>In ALS range ${S.inAls}</span><span><b style="background:var(--warn)"></b>Toward ALS ${S.towardAls}</span><span><b style="background:#e3b45a"></b>Beyond both ${S.beyond}</span><span><b style="background:var(--mute)"></b>Overlap ${S.overlap}</span><span><b style="background:var(--ok)"></b>Control range ${S.control}</span></div>
-   <p class="note" style="margin:10px 0 0">${S.measured} of ${S.total} comparable markers have a value. Not yet measured: ${S.notMeasured.length?esc(S.notMeasured.join(", ")):"none"}.</p></div>`;
+   <p class="brief" id="brief"></p><p class="note" style="margin:6px 0 0;font-size:12px">${S.measured} of ${S.total} comparable markers have a value. Not yet measured: ${S.notMeasured.length?esc(S.notMeasured.join(", ")):"none"}.</p></div>`;
   const rs=Reference.SECTIONS.find(s=>s.id==="rule");
   $("rule").innerHTML=`<h3>Rule-outs and pending tests</h3><p class="note">Rule out Parkinson's, MS and other conditions.</p>`+rs.qualitative.filter(r=>!r.tileOnly).map(r=>`<div class="it"><b>${esc(r.name.split(/[(:]/)[0].trim())}</b><span class="tag ${r.alex?"neutral":"none"}">${r.alex?"Negative":"Pending"}</span><div class="say mute">${esc(r.alex?r.alex+". "+r.say:r.say.replace(/^Pending\.\s*/,""))}</div></div>`).join("");
   /* tiles: every marker in the source table, ordered by importance (abnormal first, then strongest ALS biomarkers first).
@@ -248,6 +283,7 @@ function apaTable(n,title,rows,notes,first){
   return`<div class="tbl"><div class="tn">Table ${n}</div><div class="tt">${esc(title)}</div><table><thead>${head}</thead><tbody>${body}</tbody></table><p class="tnote"><i>Note.</i> ${base} ${notes||""} ${fn}</p></div>`;
 }
 function renderApa(d,E){
+  const G=(k,fb)=>reportOk(E)?esc(REPORT.sections[k]):fb;
   const S=E.summary, meta=META[PATIENT], sec=id=>E.sections.find(s=>s.id===id), rows=id=>sec(id).rows, all=rowsOf(E);
   const DEC={"palm lengths":2,"syll/s":2,"words/min":0,"steps/min":0,"cmH2O":0};   // reporting precision by unit; all other units 1 decimal
   const dpu=(unit,v)=>(+v).toFixed(unit in DEC?DEC[unit]:1);
@@ -257,23 +293,102 @@ function renderApa(d,E){
   const missing=all.filter(r=>r.value==null&&!r.info).map(r=>ABSN[r.id]||r.name.toLowerCase());
   const nbeyond=S.beyond?`, ${nw(S.beyond)} fell beyond both ranges`:"", ntoward=S.towardAls?`, ${nw(S.towardAls)} fell between the ranges closer to the ALS range`:"";
   let h=`<div class="tb"><h1>Biomarker and Motor Function Comparison Report</h1><p>Case ${esc(PATIENT)}${meta&&meta.fict?" (Fictional Case File)":""}</p><p>NeuroMotion Program</p><p>${esc(apaDate(today))}</p></div>`;
-  h+=`<div class="abs"><h2>Abstract</h2><p>${esc(summaryText(E,d))}</p><p class="kw"><i>Keywords:</i> amyotrophic lateral sclerosis, biomarkers, neurofilament light chain, grip strength, speech rate, respiratory function</p></div>`;
+  h+=`<div class="abs"><h2>Abstract</h2><p>${G("abstract",esc(summaryText(E,d)))}</p><p class="kw"><i>Keywords:</i> amyotrophic lateral sclerosis, biomarkers, neurofilament light chain, grip strength, speech rate, respiratory function</p></div>`;
   h+=`<h2 class="pb">Biomarker and Motor Function Comparison Report</h2>`;
   h+=`<h3>Method</h3><p>Measures were grouped into physical (grip strength, key pinch strength, speaking rate, and 10-m walk time), blood (serum neurofilament light chain, creatine kinase, high-sensitivity troponin T, amylin, glutamate, choline, and basophil and eosinophil counts), and respiratory (sniff nasal inspiratory pressure and forced vital capacity [FVC] while sitting and supine) domains. Speaking rate was timed over a standard 98-word reading passage. Each marker&rsquo;s most recent value was used.</p>`;
   h+=`<p>Reference values for healthy controls and for persons with ALS were taken from the project reference table (NeuroMotion Program, 2026). Where the table gave a single value, a case value within 15% of it was treated as inside that reference range. Each case value was placed in the control range, the ALS range, both, or neither; values outside both ranges were described as above or below both ranges. The FVC drop was calculated as 100 &times; (sitting FVC &minus; supine FVC) / sitting FVC.</p>`;
-  h+=`<h3>Results</h3><p>Of ${S.total} comparable markers, ${nw(S.measured)} had a case value. Of these, ${nw(S.inAls)} fell within the ALS reference range${nbeyond}${ntoward}, ${S.overlap?nw(S.overlap):"none"} fell within both ranges, and ${S.control?nw(S.control):"none"} fell within the control range (Tables 1&ndash;3).${missing.length?` No case values were available for ${esc(joinList(missing))}.`:""}</p>`;
-  if(g||p)h+=`<p>Hand measures were asymmetric. ${g?`Right grip strength was ${fmt(g.r)} kg and left was ${fmt(g.l)} kg (right-to-left ratio = ${(g.r/g.l).toFixed(2)})`:""}${g&&p?"; ":""}${p?`${g?"right":"Right"} key pinch strength was ${fmt(p.r)} kg and left was ${fmt(p.l)} kg (ratio = ${(p.r/p.l).toFixed(2)})`:""}.${fvd&&fvd.value!=null?` Forced vital capacity fell by ${fvd.value.toFixed(1)}% from sitting to supine.`:""}</p>`;
+  h+=reportOk(E)?`<h3>Results</h3><p>${esc(REPORT.sections.results)}</p>`:`<h3>Results</h3><p>Of ${S.total} comparable markers, ${nw(S.measured)} had a case value. Of these, ${nw(S.inAls)} fell within the ALS reference range${nbeyond}${ntoward}, ${S.overlap?nw(S.overlap):"none"} fell within both ranges, and ${S.control?nw(S.control):"none"} fell within the control range (Tables 1&ndash;3).${missing.length?` No case values were available for ${esc(joinList(missing))}.`:""}</p>`;
+  if(!reportOk(E)&&(g||p))h+=`<p>Hand measures were asymmetric. ${g?`Right grip strength was ${fmt(g.r)} kg and left was ${fmt(g.l)} kg (right-to-left ratio = ${(g.r/g.l).toFixed(2)})`:""}${g&&p?"; ":""}${p?`${g?"right":"Right"} key pinch strength was ${fmt(p.r)} kg and left was ${fmt(p.l)} kg (ratio = ${(p.r/p.l).toFixed(2)})`:""}.${fvd&&fvd.value!=null?` Forced vital capacity fell by ${fvd.value.toFixed(1)}% from sitting to supine.`:""}</p>`;
   h+=apaTable(1,"Physical Measures: Case Values Compared With Reference Values",rows("physical"),"",true);
   h+=apaTable(2,"Blood Biomarkers: Case Values Compared With Reference Values",rows("blood"),"Em dashes indicate that no case value was available.",false);
   h+=apaTable(3,"Respiratory Measures: Case Values Compared With Reference Values",rows("resp"),"FVC = forced vital capacity; SNIP = sniff nasal inspiratory pressure.",false);
   if(longRows)h+=`<p>Repeated measurements allowed change from the first week of readings to the most recent week to be described (Table 4).</p><div class="tbl"><div class="tn">Table 4</div><div class="tt">Change From Baseline Across Repeated Measurements</div><table><thead><tr><th>Measure</th><th>Unit</th><th class="n">Baseline</th><th class="n">Latest</th><th class="n">Change (%)</th><th class="n"><i>n</i></th><th class="n">Span (weeks)</th></tr></thead><tbody>${longRows}</tbody></table><p class="tnote"><i>Note.</i> Baseline is the median of readings in the first week; Latest is the median of readings in the most recent week; <i>n</i> is the number of readings. For measures on which lower values are better (e.g., walk time, speech rhythm variability), a positive change indicates worsening.</p></div>`;
   const rq=q.qualitative.filter(r=>!r.tileOnly).map(r=>r.alex?`${r.name.split(" (")[0]}: ${r.alex.toLowerCase()}. ${r.say}`:`${r.name.split(":")[0]}: results were not available. ${r.say.replace(/^Pending\.\s*/,"")}`).join(" ");
-  h+=`<h3>Rule-Outs and Pending Tests</h3><p>${esc(q.note)} ${esc(rq)}</p>`;
-  h+=`<h3>Limitations</h3><p>These comparisons are descriptive. Reference ranges for controls and persons with ALS overlap for several markers (e.g., speaking rate and creatine kinase), so no single marker is diagnostic. Most laboratory markers reflect a single time point. ${meta&&meta.fict?"The case is fictional and was constructed for demonstration. ":""}Cells of the source table that required interpretation are flagged in the table notes and should be confirmed against the primary source before clinical use. This report supports, and does not replace, clinical judgment.</p>`;
+  const scans=MRI.forPatient(PATIENT);
+  if(scans.length){
+    h+=`<h3>Imaging</h3><p>Magnetic resonance imaging of the brain and cervical spine is shown in ${scans.length>1?`Figures 1&ndash;${scans.length}`:"Figure 1"}.</p>`;
+    if(reportOk(E))h+=`<p>${esc(REPORT.sections.imaging)}</p>`;
+    h+=scans.map(m=>`<div class="fig"><div class="tn">Figure ${m.n}</div><div class="tt">${esc(m.title)}</div><img src="${esc(m.src)}" alt="${esc(m.alt)}"><p class="tnote"><i>Note.</i> ${esc(m.finding)}</p></div>`).join("");
+  }
+  h+=`<h3>Rule-Outs and Pending Tests</h3><p>${reportOk(E)?esc(REPORT.sections.rule_outs):esc(q.note)+" "+esc(rq)}</p>`;
+  h+=reportOk(E)?`<h3>Limitations</h3><p>${esc(REPORT.sections.limitations)}</p>`:`<h3>Limitations</h3><p>These comparisons are descriptive. Reference ranges for controls and persons with ALS overlap for several markers (e.g., speaking rate and creatine kinase), so no single marker is diagnostic. Most laboratory markers reflect a single time point. ${meta&&meta.fict?"The case is fictional and was constructed for demonstration. ":""}Cells of the source table that required interpretation are flagged in the table notes and should be confirmed against the primary source before clinical use. This report supports, and does not replace, clinical judgment.</p>`;
   h+=`<div class="refs"><h2 class="pb">References</h2><p>NeuroMotion Program. (2026). <i>Biomarker reference table: Control, ALS, and case values</i> [Unpublished raw data]. NeuroMotion Program.</p><p class="ni" style="margin-top:.2in;text-indent:0"><i>Author note.</i> Primary literature citations for each reference value are not recorded in the project table and should be added before external distribution.</p></div>`;
   $("apa").innerHTML=h;
 }
-function render(d){ current=d; const E=Reference.evaluate(d.values); renderScreen(d,E); renderApa(d,E); }
+function render(d){ current=d; const E=Reference.evaluate(d.values); renderScreen(d,E); renderMri(); renderApa(d,E); HomePanel.render($("home"),PATIENT); renderAi(E); requestAi(E); }
+/* ---------------- neurosurgeon summary (Gemini summarises the findings; built-in text if it is unavailable) ---------------- */
+function aiFindings(E){
+  const S=E.summary, rows=rowsOf(E), q=Reference.SECTIONS.find(s=>s.id==="rule").qualitative;
+  return {case_code:PATIENT,fictional:!!(META[PATIENT]&&META[PATIENT].fict),
+    counts:{measured:S.measured,total:S.total,in_als_range:S.inAls,toward_als:S.towardAls,beyond_both_ranges:S.beyond,overlap:S.overlap,control_range:S.control},
+    markers:rows.filter(r=>r.value!=null&&!r.info).map(r=>({name:r.name,unit:r.unit,case_value:caseText(r),control_range:r.control.text||"",als_range:r.als.text||"",placement:r.placed.label})),
+    not_measured:S.notMeasured,
+    rule_outs:q.filter(r=>!r.tileOnly).map(r=>({name:r.name.split(/[(:]/)[0].trim(),result:r.alex?r.alex+". "+r.say:"Pending"})),
+    imaging:MRI.forPatient(PATIENT).map(m=>({study:m.title,finding:m.finding}))};
+}
+let AI={key:"",status:"idle",text:"",note:""}, REPORT={key:"",sections:null};
+const aiKey=E=>JSON.stringify(aiFindings(E));
+const aiOk=E=>AI.status==="ok"&&AI.key===aiKey(E);
+const reportOk=E=>!!REPORT.sections&&REPORT.key===aiKey(E);
+const briefFallback=E=>{const S=E.summary; return `${S.inAls+S.towardAls} of ${S.measured} measured markers are in or toward the ALS range${S.beyond?`, and ${S.beyond} is beyond both ranges`:""}. This is a descriptive comparison, not a diagnosis.`};
+const briefText=E=>aiOk(E)?AI.text:briefFallback(E);
+function renderAi(E){   // the 3-sentence brief inside the top evidence card
+  const el=$("brief"); if(!el)return; const ok=aiOk(E), loading=AI.status==="loading"&&AI.key===aiKey(E);
+  el.innerHTML=`<img class="gl" src="assets/gemini.png" alt="Gemini" title="${ok?"Summarised by Gemini from the values on this page":loading?"Waiting for Gemini":"Built-in text (Gemini unavailable)"}" style="${ok||loading?"":"filter:grayscale(1);opacity:.55"}">${esc(briefText(E))}`;
+}
+async function askGemini(f,mode){
+  const r=await fetch("/api/report-summary",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({findings:f,mode})});
+  if(!r.ok)throw new Error("Summary service returned "+r.status);
+  const j=await r.json(); if(j.source!=="gemini")throw new Error(j.note||"Gemini unavailable"); return j;
+}
+async function requestAi(E){
+  const f=aiFindings(E), key=JSON.stringify(f); if(AI.key===key&&AI.status!=="idle")return;
+  AI={key,status:"loading",text:"",note:""}; renderAi(E);
+  try{const j=await askGemini(f,"brief"); if(AI.key!==key)return; AI={key,status:"ok",text:j.summary,note:""}}
+  catch(e){ if(AI.key!==key)return; AI={key,status:"fallback",text:"",note:e.message} }
+  if(current)renderAi(Reference.evaluate(current.values));
+}
+/* Generate report: Gemini writes the narrative sections from the findings; tables and figures stay computed. Falls back to built-in text, then opens the print dialog. */
+async function generateReport(){
+  const btn=$("gen"), E=Reference.evaluate(current.values), f=aiFindings(E), key=JSON.stringify(f), cs=$("copy-st");
+  btn.disabled=true; btn.textContent="Gemini is writing the report..."; cs.textContent=""; cs.className="st";
+  if(!reportOk(E)){
+    try{const j=await askGemini(f,"report"); REPORT={key,sections:j.sections}}
+    catch(e){cs.textContent="Gemini was not available ("+e.message+"), so the report uses the built-in text."; cs.className="st bad"}
+    renderApa(current,Reference.evaluate(current.values));
+  }
+  btn.disabled=false; btn.textContent="Generate report";
+  setTimeout(()=>window.print(),150);
+}
+$("gen").onclick=generateReport;
+/* ---------------- MRI card stack + lightbox ---------------- */
+const SCANS=MRI.forPatient(PATIENT); let mriCur=0, lbOpen=false, lbFrom=null;
+function renderMri(){
+  const box=$("mri"), row=document.querySelector(".row2");
+  if(!SCANS.length){box.hidden=true; row.classList.add("no-mri"); return}
+  if(box.dataset.built){layoutMri(); return}
+  box.dataset.built="1"; box.hidden=false; row.classList.remove("no-mri");
+  box.innerHTML=`<h3>MRI scans</h3><p class="note" style="margin-top:2px">Click the stack to enlarge an image with its caption.</p>
+    <div class="mpile" id="mpile" tabindex="0" role="button" aria-label="MRI images, ${SCANS.length} in the stack. Click to enlarge.">${SCANS.map((m,i)=>`<div class="mc" data-i="${i}"><img src="${esc(m.src)}" alt="${esc(m.alt)}" draggable="false"><span class="mtag">${esc(m.tab)}</span></div>`).join("")}</div>
+    <div class="mnav"><button type="button" id="m-prev" aria-label="Previous image">&#8249;</button><span class="mt" id="m-t"></span><button type="button" id="m-next" aria-label="Next image">&#8250;</button></div>`;
+  layoutMri();
+  $("mpile").addEventListener("click",()=>openLb(mriCur));
+  $("mpile").addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();openLb(mriCur)} else if(e.key==="ArrowRight")stepMri(1); else if(e.key==="ArrowLeft")stepMri(-1)});
+  $("m-prev").onclick=()=>stepMri(-1); $("m-next").onclick=()=>stepMri(1);
+}
+function layoutMri(){const n=SCANS.length; document.querySelectorAll("#mpile .mc").forEach(el=>{el.dataset.r=(+el.dataset.i-mriCur+n)%n}); const t=$("m-t"); if(t)t.textContent=`${mriCur+1} / ${n} · ${SCANS[mriCur].title}`}
+function stepMri(d){mriCur=(mriCur+d+SCANS.length)%SCANS.length; layoutMri()}
+function drawLb(){
+  const m=SCANS[mriCur];
+  $("lb").innerHTML=`<figure><div class="lbc"><button type="button" id="lb-prev" aria-label="Previous image">&#8249;</button><span>${mriCur+1} of ${SCANS.length}</span><button type="button" id="lb-next" aria-label="Next image">&#8250;</button><button type="button" class="lbx" id="lb-x">Close</button></div>
+    <img src="${esc(m.src)}" alt="${esc(m.alt)}"><figcaption><div class="lbt">Figure ${m.n} &middot; ${esc(m.tab)}</div><b>${esc(m.label)}. ${esc(m.title)}.</b> ${esc(m.finding)}</figcaption></figure>`;
+  $("lb-prev").onclick=e=>{e.stopPropagation();lbStep(-1)}; $("lb-next").onclick=e=>{e.stopPropagation();lbStep(1)}; $("lb-x").onclick=closeLb; $("lb-x").focus();
+}
+function lbStep(d){stepMri(d); drawLb(); $("lb-next").focus()}
+function openLb(i){mriCur=i; layoutMri(); lbFrom=document.activeElement; lbOpen=true; $("lb").hidden=false; document.body.style.overflow="hidden"; drawLb()}
+function closeLb(){if(!lbOpen)return; lbOpen=false; $("lb").hidden=true; document.body.style.overflow=""; if(lbFrom&&lbFrom.focus)lbFrom.focus()}
+$("lb").addEventListener("click",e=>{if(!e.target.closest("figure"))closeLb()});
+document.addEventListener("keydown",e=>{if(!lbOpen)return; if(e.key==="Escape")closeLb(); else if(e.key==="ArrowRight")lbStep(1); else if(e.key==="ArrowLeft")lbStep(-1)});
 /* ---------------- flip tiles ---------------- */
 function flipTile(t){const on=t.classList.toggle("flip");t.setAttribute("aria-pressed",on?"true":"false")}
 $("marks").addEventListener("click",e=>{const t=e.target.closest(".tile");if(t)flipTile(t)});
@@ -285,7 +400,7 @@ $("marks").addEventListener("click",e=>{if(e.target.closest(".deck"))nextCard()}
 $("marks").addEventListener("keydown",e=>{if(e.key!=="Enter"&&e.key!==" ")return;if(e.target.closest(".deck")){e.preventDefault();nextCard()}});
 /* ---------------- copy ---------------- */
 async function copyText(t,msg){ try{await navigator.clipboard.writeText(t)}catch(e){const a=document.createElement("textarea");a.value=t;document.body.appendChild(a);a.select();document.execCommand("copy");a.remove()} $("copy-st").textContent=msg; $("copy-st").className="st ok"; setTimeout(()=>{$("copy-st").textContent=""},3000); }
-$("copy-sum").onclick=()=>copyText(summaryText(Reference.evaluate(current.values),current),"Summary copied.");
+$("copy-sum").onclick=()=>copyText(briefText(Reference.evaluate(current.values)),"Summary copied.");
 $("copy-tbl").onclick=()=>{const E=Reference.evaluate(current.values); const lines=[["Marker","Unit","Control","ALS","Case","Placement"].join("\t")]; for(const r of E.sections.flatMap(s=>s.rows))lines.push([r.name,r.unit,r.control.text||"",r.als.text||"",caseText(r),r.value==null?"Not measured":r.placed.label].join("\t")); copyText(lines.join("\n"),"Results table copied (tab-separated, paste into a spreadsheet).")};
 /* ---------------- add results ---------------- */
 let found={};

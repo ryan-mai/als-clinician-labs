@@ -1,0 +1,547 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#9fb09f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>Phone Session - NeuroMotion</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500&family=Doto:wght@700&family=Space+Grotesk:wght@500;600&display=swap">
+<link rel="stylesheet" href="theme.css">
+<style>
+  html, body { height:auto; min-height:100%; }
+  body { padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom); }
+  #app { max-width:480px; margin:0 auto; padding:16px; display:flex; flex-direction:column; gap:14px; }
+  h1 { font-size:26px; line-height:1.15; } h2 { font-size:18px; } p { margin:0; }
+  .card { padding:18px; }
+  .small { font-size:13px; color:var(--mute); }
+  input[type=text] { font:inherit; font-size:17px; width:100%; padding:13px 16px; border-radius:16px; border:1px solid var(--line); background:rgba(255,255,255,.7); color:#16191a; }
+  .btn { font-size:17px; padding:15px 22px; width:100%; text-align:center; }
+  .btn:disabled { opacity:.5; }
+  .steps { display:flex; flex-wrap:wrap; gap:6px; margin:12px 0 4px; }
+  .steps .pill { font-size:11px; }
+  /* run view */
+  .cam { position:relative; border-radius:26px; overflow:hidden; background:#101411; height:30vh; min-height:170px; max-height:320px; box-shadow:var(--shadow); }
+  #v-run.reading .cam { height:15vh; min-height:96px; }
+  .dock { position:sticky; bottom:0; z-index:5; display:flex; flex-direction:column; gap:8px; padding:10px 0 calc(8px + env(safe-area-inset-bottom)); background:linear-gradient(to top, var(--bg2) 75%, transparent); }
+  #fin { font-size:19px; padding:18px; }
+  #dbgline { padding:6px 10px; font-size:11px; word-break:break-all; }
+  .cam video, .cam canvas { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; transform:scaleX(-1); }
+  .cam .shade { position:absolute; inset:0; background:radial-gradient(ellipse at 50% 45%, transparent 55%, rgba(8,12,9,.55)); pointer-events:none; }
+  .chip { position:absolute; left:12px; right:12px; top:12px; margin:0 auto; width:max-content; max-width:calc(100% - 24px); padding:6px 14px; border-radius:99px; font:500 12px var(--f-mono); background:rgba(16,20,17,.62); color:#eef2ec; backdrop-filter:blur(8px); text-align:center; transition:background .2s; }
+  .chip.ok { background:rgba(79,138,91,.82); } .chip.warn { background:rgba(201,138,29,.88); } .chip.bad { background:rgba(194,69,58,.88); }
+  .big { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font:700 64px var(--f-dot); color:#fff; text-shadow:0 2px 16px rgba(0,0,0,.6); pointer-events:none; }
+  .meter { position:absolute; left:16px; right:16px; bottom:14px; height:6px; border-radius:6px; background:rgba(255,255,255,.2); overflow:hidden; }
+  .meter i { display:block; height:100%; width:0; background:#bfe3b8; transition:width .08s; }
+  .sheet { display:flex; gap:14px; align-items:center; padding:16px; }
+  .ring { flex:0 0 64px; width:64px; height:64px; position:relative; }
+  .ring svg { width:64px; height:64px; transform:rotate(-90deg); } .ring circle { fill:none; stroke-width:6; }
+  .ring .bg { stroke:var(--line); } .ring .fg { stroke:var(--sage-d); stroke-linecap:round; stroke-dasharray:176; stroke-dashoffset:176; transition:stroke-dashoffset .15s linear; }
+  .ring b { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font:600 13px var(--f-mono); }
+  .sheet h2 { margin-bottom:2px; } .sheet .small { font-size:14px; }
+  .dots { display:flex; gap:5px; justify-content:center; } .dots i { width:22px; height:5px; border-radius:4px; background:var(--line); } .dots i.on { background:var(--sage-d); } .dots i.cur { background:var(--ink); }
+  #passage { padding:14px 16px; font-size:18px; line-height:1.6; }
+  /* results */
+  table { width:100%; border-collapse:collapse; font-size:15px; } td { padding:8px 2px; border-bottom:1px solid var(--line); } td:last-child { text-align:right; font-variant-numeric:tabular-nums; font-weight:500; }
+  .trend { display:grid; grid-template-columns:1fr auto; gap:2px 12px; padding:12px 0; border-bottom:1px solid var(--line); align-items:center; }
+  .trend .n { font-weight:500; } .trend .v { text-align:right; font:500 15px var(--f-mono); } .trend svg { grid-column:1 / 3; width:100%; height:34px; }
+  .tag { font:500 11px var(--f-mono); padding:2px 8px; border-radius:99px; background:var(--sage-l); color:var(--sage-d); margin-left:6px; }
+  .tag.warn { background:rgba(201,138,29,.15); color:var(--warn); } .tag.est { background:transparent; border:1px solid var(--line); color:var(--mute); }
+  .msg { font-size:14px; min-height:1.3em; } .msg.bad { color:var(--bad); } .msg.ok { color:var(--ok); }
+  .row { display:flex; gap:10px; } .row > * { flex:1; }
+  .hero { font:700 22px/1.25 var(--f-dot); }
+  a.lnk { color:var(--sage-d); font-size:13px; }
+  /* first-time onboarding: selectable cards, same glass look as the rest */
+  .opt { display:grid; grid-template-columns:1fr auto; gap:2px 12px; align-items:center; text-align:left; width:100%; font:inherit; color:var(--ink); padding:14px 16px; border-radius:20px; border:1px solid var(--glass-line); background:var(--card); box-shadow:var(--shadow); cursor:pointer; }
+  .opt b { font-weight:500; font-size:16px; } .opt small { grid-column:1; color:var(--mute); font-size:13px; line-height:1.35; }
+  .opt i { grid-row:1 / span 2; grid-column:2; width:26px; height:26px; border-radius:50%; border:1.5px solid var(--line); display:flex; align-items:center; justify-content:center; font-style:normal; font-size:15px; color:transparent; }
+  .opt.on { background:var(--sage-l); border-color:var(--sage-d); } .opt.on i { background:var(--sage-d); border-color:var(--sage-d); color:#fff; }
+  .opt.info { cursor:default; grid-template-columns:1fr; } .opt:focus-visible, .btn:focus-visible { outline:2px solid var(--sage-d); outline-offset:2px; }
+  .topics ol { margin:8px 0 0 20px; padding:0; font-size:15px; } .topics li { margin:7px 0; }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- 1. intro: one tap starts everything -->
+  <section id="v-intro" style="display:flex;flex-direction:column;gap:14px">
+    <div style="padding:8px 4px 0"><div class="mono mute" style="font-size:12px;letter-spacing:.08em">NEUROMOTION</div><h1>Your 5-minute<br>check-in</h1></div>
+    <div class="glass card">
+      <p>Have a relaxed chat with a voice assistant about your day, say three vowel sounds, then squeeze and pinch each hand toward the camera. Your phone does the measuring while you go; there are almost no buttons to press between steps.</p>
+      <div class="steps" id="plan"></div>
+      <label class="small" for="code" style="display:block;margin:14px 0 6px">Your patient code (from your clinic)</label>
+      <input type="text" id="code" placeholder="e.g. ALEX-CASE" autocomplete="off" autocapitalize="characters">
+      <p class="small" style="margin-top:12px">During the chat your voice is sent to a speech service (ElevenLabs) so the assistant can talk with you. Camera video stays on this phone.</p>
+      <div style="height:14px"></div>
+      <button class="btn" id="begin">Begin</button>
+      <p class="msg" id="imsg" style="margin-top:8px"></p>
+    </div>
+    <div class="glass card small"><b style="color:var(--ink)">How to set up.</b> Lean the phone upright against a mug or a stack of books, front camera facing you, about an arm's length away (30 to 40 cm) at face height. That leaves both hands free and keeps the picture steady. <b style="color:var(--ink)">For speech:</b> your face in the top half of the picture, in a quiet room. Earphones help during the chat, so the assistant's voice is not picked up by your microphone. <b style="color:var(--ink)">For the hand steps:</b> rest your elbow on the table and hold the hand 30 to 40 cm from the phone, palm toward the screen, fingers up, whole hand in view; for the pinch, turn the hand side-on. If you have no stand, hold the phone steady with your <i>other</i> hand, never the one being tested.</div>
+    <div class="glass card small"><b style="color:var(--ink)">What this is.</b> A movement and voice check that tracks <i>your own</i> trend between visits. It is not a diagnosis and it does not measure force. Camera video, and the sound for the vowel and hand steps, are analysed on this phone and never uploaded. For the chat, your voice goes to the speech service so the assistant can hear and answer you; this app does not save the recording or what was said. Only a handful of summary numbers are shared with your care team, and only when you tap Share.</div>
+  </section>
+
+  <!-- 1b. first-time onboarding (only when this patient code is not in the database yet) -->
+  <section id="v-onb" hidden style="display:none;flex-direction:column;gap:14px">
+    <div style="padding:8px 4px 0"><div class="mono mute" style="font-size:12px;letter-spacing:.08em" id="onb-k"></div><h1 id="onb-h" style="margin-top:2px"></h1><p class="small" id="onb-p" style="margin-top:8px;font-size:15px"></p></div>
+    <div id="onb-body" style="display:flex;flex-direction:column;gap:10px"></div>
+    <div class="dots" id="onb-dots" aria-hidden="true"></div>
+    <div class="row"><button class="btn ghost" id="onb-back" type="button">Back</button><button class="btn" id="onb-next" type="button">Continue</button></div>
+    <p class="msg" id="onb-msg"></p>
+  </section>
+
+  <!-- 2. run: camera in the background, prompts on a sheet -->
+  <section id="v-run" hidden style="display:none;flex-direction:column;gap:12px">
+    <div class="cam"><video id="vid" playsinline muted></video><canvas id="ovl"></canvas><div class="shade"></div><div class="chip" id="chip">Getting ready...</div><div class="big" id="big"></div><div class="meter" aria-hidden="true"><i id="lvl"></i></div></div>
+    <div class="glass card" id="passage" hidden></div>
+    <div class="glass card topics" id="topics" hidden><h2>We will chat about</h2><ol id="topics-l"></ol></div>
+    <div class="dock">
+      <div class="glass sheet"><div class="ring"><svg viewBox="0 0 64 64"><circle class="bg" cx="32" cy="32" r="28"/><circle class="fg" id="ring" cx="32" cy="32" r="28"/></svg><b id="ringt"></b></div><div style="min-width:0"><h2 id="sname"></h2><p class="small" id="shelp"></p></div></div>
+      <div id="dbgline" class="glass small mono" hidden></div>
+      <button class="btn" id="fin" hidden>I have finished reading</button>
+      <div class="dots" id="dots"></div>
+      <button class="btn ghost" id="quit" style="font-size:14px;padding:10px">Stop and go back</button>
+    </div>
+  </section>
+
+  <!-- 3. results -->
+  <section id="v-res" hidden style="display:none;flex-direction:column;gap:14px">
+    <div style="padding:8px 4px 0"><div class="mono mute" style="font-size:12px;letter-spacing:.08em" id="rdate"></div><h1 id="rhead">Done</h1></div>
+    <div class="glass card"><h2>This check-in</h2><table id="rtbl" style="margin-top:6px"></table><p class="small" id="rnote" style="margin-top:10px"></p>
+      <div style="height:12px"></div><button class="btn" id="share">Share with my care team</button><p class="msg" id="smsg" style="margin-top:8px"></p></div>
+    <div class="glass card" id="prog" hidden><h2>Your progress</h2><p class="small" id="pnote" style="margin:4px 0 6px"></p><div id="ptrends"></div></div>
+    <div class="glass card" id="walk"><h2>Optional: a one-minute walk</h2><p class="small" style="margin:4px 0 10px">Put the phone in a pocket or at your waist and walk steadily for a minute. Uses the motion sensor only.</p><button class="btn ghost" id="walkgo">Start walking</button><p class="msg" id="wmsg" style="margin-top:8px"></p></div>
+    <div class="glass card"><h2>Saved for your appointment</h2><p class="small" style="margin-top:4px">These can only be measured in clinic: blood tests (neurofilament light chain, creatine kinase), the genetic panel, any spinal tap or muscle biopsy, and true dynamometer grip and pinch force. Your phone numbers give your care team a baseline and a trend in the meantime.</p></div>
+    <button class="btn ghost" id="again">Do another check-in</button>
+  </section>
+</div>
+
+<script src="supabase-config.js"></script>
+<script src="labs.js"></script>
+<script src="grip.js"></script>
+<script src="measures.js"></script>
+<script src="ddk.js"></script>
+<script src="convo.js"></script>
+<script src="triage.js"></script>
+<script src="vowel.js"></script>
+<script src="lipjaw.js"></script>
+<script src="kgest.js"></script>
+<script src="gait.js"></script>
+<script src="companion-api.js"></script>
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+const esc = t => String(t).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const Q = new URLSearchParams(location.search), DEBUG = Q.has("debug"), DEMO = Q.has("demo"), DEMO_F = Q.get("decline") ? +Q.get("decline") : 1;   // demo: synthetic data through the real analysers (no camera/mic)
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const V = "0.10.14", BASE = `https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${V}`,
+  MODEL = { hand: "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task",
+            face: "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task" };
+
+/* ------------------------------------------------------------------ the plan */
+const STEPS = [
+  { id: "talk", kind: "talk", name: "Have a chat", help: "Just talk with the assistant like you would with a friendly person. There are no right answers; answer in your own words. The ring fills as we hear you.", short: "Chat" },
+  { id: "v_i", kind: "vowel", v: "i", name: "Say \"eee\"", help: "Take a breath, then say a long \"eee\" (as in see) and hold it steady.", short: "ee" },
+  { id: "v_a", kind: "vowel", v: "a", name: "Say \"ahh\"", help: "Now a long, steady \"ahh\" (as in father).", short: "ah" },
+  { id: "v_u", kind: "vowel", v: "u", name: "Say \"ooo\"", help: "Now a long, steady \"ooo\" (as in too).", short: "oo" },
+  { id: "grip_r", kind: "hand", sig: "grip", side: "r", name: "Right hand: fist", help: "Elbow on the table, right hand 30 to 40 cm from the phone, palm toward the screen, fingers up, whole hand in view. Open wide, then close into a fist, again and again.", short: "Fist R" },
+  { id: "pinch_r", kind: "hand", sig: "pinch", side: "r", name: "Right hand: pinch", help: "Right hand up, turned side-on so the camera sees thumb and first finger in profile. Open them wide, then pinch together firmly, again and again.", short: "Pinch R" },
+  { id: "grip_l", kind: "hand", sig: "grip", side: "l", name: "Left hand: fist", help: "Switch to your left hand: elbow on the table, palm toward the screen, fingers up, whole hand in view. Open wide, then close into a fist, again and again.", short: "Fist L" },
+  { id: "pinch_l", kind: "hand", sig: "pinch", side: "l", name: "Left hand: pinch", help: "Left hand up, turned side-on. Open thumb and first finger wide, then pinch together firmly, again and again.", short: "Pinch L" },
+];
+$("plan").innerHTML = STEPS.map(s => `<span class="pill">${esc(s.short)}</span>`).join("");
+
+/* ------------------------------------------------------------------ sensors: one camera + mic stream, tracked in the background */
+const S = { stream: null, models: {}, tap: null, mode: null, live: { hand: null, face: null }, rec: null, running: false, lastTs: -1, floor: 0.01, abort: false };
+const vid = $("vid"), ovl = $("ovl"), octx = ovl.getContext("2d");
+const HAND_LINES = [[0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],[5,9],[9,10],[10,11],[11,12],[9,13],[13,14],[14,15],[15,16],[13,17],[17,18],[18,19],[19,20],[0,17]];
+
+async function openStream() {
+  const audio = { channelCount: 1, echoCancellation: false, noiseSuppression: false, autoGainControl: true };
+  const tries = [{ video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 }, frameRate: { ideal: 30 } }, audio }, { video: true, audio }];
+  let err; for (const c of tries) { try { return await navigator.mediaDevices.getUserMedia(c); } catch (e) { err = e; if (e.name === "NotAllowedError" || e.name === "NotFoundError") break; } }
+  throw err;
+}
+function permMsg(e) {
+  const n = e && e.name; if (!navigator.mediaDevices) return "the camera needs https (or localhost). Open this page from a secure address.";
+  if (n === "NotAllowedError") return "camera or microphone permission was denied. Allow both for this site, then reload.";
+  if (n === "NotFoundError") return "no camera or microphone was found.";
+  if (n === "NotReadableError") return "the camera or microphone is busy. Close other apps that use it and try again.";
+  return (e && e.message) || String(e);
+}
+class Tap {                                   // continuous microphone capture; any stretch can be cut out afterwards by sample index
+  constructor(stream) {
+    const AC = window.AudioContext || window.webkitAudioContext; this.ctx = new AC(); this.sr = this.ctx.sampleRate; this.chunks = []; this.n = 0; this.lvl = 0; this.peak = 0;
+    this.src = this.ctx.createMediaStreamSource(stream); this.proc = this.ctx.createScriptProcessor(2048, 1, 1);
+    this.proc.onaudioprocess = e => { const d = new Float32Array(e.inputBuffer.getChannelData(0)); this.chunks.push({ s: this.n, d }); this.n += d.length; let s = 0; for (let i = 0; i < d.length; i++) { s += d[i] * d[i]; const a = Math.abs(d[i]); if (a > this.peak) this.peak = a; } this.lvl = Math.sqrt(s / d.length); };
+    this.src.connect(this.proc); this.proc.connect(this.ctx.destination);
+  }
+  async ready() { if (this.ctx.state === "suspended") { try { await this.ctx.resume(); } catch (e) {} } }
+  mark() { return this.n; }
+  slice(a, b) { a = Math.max(0, a); const out = new Float32Array(Math.max(0, Math.min(b, this.n) - a)); for (const c of this.chunks) { if (c.s + c.d.length <= a || c.s >= b) continue; const from = Math.max(a, c.s), to = Math.min(b, c.s + c.d.length); out.set(c.d.subarray(from - c.s, to - c.s), from - a); } return out; }
+  stop() { try { this.proc.disconnect(); this.src.disconnect(); this.ctx.close(); } catch (e) {} }
+}
+async function loadModels() {
+  const { HandLandmarker, FaceLandmarker, FilesetResolver } = await import(`${BASE}/vision_bundle.mjs`), fs = await FilesetResolver.forVisionTasks(`${BASE}/wasm`);
+  const mk = async (C, path, o) => { try { return await C.createFromOptions(fs, { baseOptions: { modelAssetPath: path, delegate: "GPU" }, runningMode: "VIDEO", ...o }); } catch (e) { return await C.createFromOptions(fs, { baseOptions: { modelAssetPath: path, delegate: "CPU" }, runningMode: "VIDEO", ...o }); } };
+  S.models.hand = await mk(HandLandmarker, MODEL.hand, { numHands: 1 }); S.models.face = await mk(FaceLandmarker, MODEL.face, { numFaces: 1 });
+}
+const thr = () => Math.max(0.006, S.floor * 2.5);
+const voiced = () => S.tap && S.tap.lvl > thr();
+let faceSkip = 0;
+function loop() {                             // runs every frame; only the model the current step needs is run (phones are not fast)
+  if (!S.running) return;
+  const ts = performance.now(), W = vid.videoWidth, H = vid.videoHeight;
+  if (vid.readyState >= 2 && ts !== S.lastTs) {
+    S.lastTs = ts; octx.clearRect(0, 0, ovl.width, ovl.height);
+    if (S.mode === "hand") {
+      const r = S.models.hand.detectForVideo(vid, ts), lm = r.landmarks && r.landmarks[0], sig = S.sig;
+      const c = lm ? (sig === "pinch" ? KgEst.pinch(lm, W, H) : Grip.closure(lm, W, H)) : null; S.live.hand = c;
+      if (lm) { dots(lm, [0, 4, 8, 12, 16, 20], "#bfe3b8"); if (sig === "pinch") { line(lm[4], lm[8]); } }
+      if (S.rec) S.rec.frames.push({ t: (ts - S.rec.t0) / 1000, c });
+    } else if (S.mode === "face" && (faceSkip++ & 1) === 0) {
+      const r = S.models.face.detectForVideo(vid, ts), lm = r.faceLandmarks && r.faceLandmarks[0], m = lm ? LipJaw.mouth(lm, W, H) : null; S.live.face = m;
+      if (lm) dots(lm, [13, 14, 61, 291, 152], "#bfe3b8");
+      if (S.rec) S.rec.frames.push(m ? { t: (ts - S.rec.t0) / 1000, ...m } : { t: (ts - S.rec.t0) / 1000, open: null });
+    }
+  }
+  $("lvl").style.width = Math.min(100, Math.round((S.tap ? S.tap.lvl : 0) * 900)) + "%";
+  requestAnimationFrame(loop);
+}
+function dots(lm, idx, col) { octx.fillStyle = col; for (const i of idx) { octx.beginPath(); octx.arc(lm[i].x * ovl.width, lm[i].y * ovl.height, 5, 0, 7); octx.fill(); } }
+function line(a, b) { octx.strokeStyle = "#bfe3b8"; octx.lineWidth = 3; octx.beginPath(); octx.moveTo(a.x * ovl.width, a.y * ovl.height); octx.lineTo(b.x * ovl.width, b.y * ovl.height); octx.stroke(); }
+
+/* ------------------------------------------------------------------ small UI helpers */
+const chip = (t, cls = "") => { $("chip").textContent = t; $("chip").className = "chip " + cls; };
+const ring = (frac, label = "") => { $("ring").style.strokeDashoffset = String(176 * (1 - Math.max(0, Math.min(1, frac)))); $("ringt").textContent = label; };
+const big = t => { $("big").textContent = t; };
+function dotsUi(cur, done) { $("dots").innerHTML = STEPS.map((s, i) => `<i class="${done.includes(s.id) ? "on" : ""} ${i === cur ? "cur" : ""}"></i>`).join(""); }
+const waitFor = async (fn, ms) => { const t0 = performance.now(); while (!S.abort) { if (fn()) return true; if (performance.now() - t0 > ms) return false; await sleep(40); } throw new Error("aborted"); };
+
+/* ------------------------------------------------------------------ synthetic data for ?demo=1 (the real analysers still run on it) */
+const SIM = {
+  vowel(v) {
+    const sr = 44100, F = { i: [300, 2300], a: [800, 1300], u: [320, 900] }[v], n = 4 * sr, pad = sr >> 1; let seed = 5 + v.charCodeAt(0); const rnd = () => { seed = (seed * 1664525 + 1013904223) % 4294967296; return seed / 4294967296 - 0.5; };
+    const ctr = (f, c) => c + (f - c) * (0.55 + 0.45 * DEMO_F);                       // demo "decline" pulls vowels toward the centre
+    const forms = [[ctr(F[0], 520), 70], [ctr(F[1], 1500), 100], [2500, 150], [3500, 200]]; let y = new Float64Array(n); for (let i = 0; i < n; i += Math.round(sr / 120)) y[i] = 1;
+    for (let p = 0; p < 2; p++) { const o = new Float64Array(n); for (let i = 0; i < n; i++) o[i] = 0.03 * y[i] + 0.97 * (i ? o[i - 1] : 0); y = o; }
+    for (const [f, bw] of forms) { const r = Math.exp(-Math.PI * bw / sr), c1 = 2 * r * Math.cos(2 * Math.PI * f / sr), c2 = -r * r, o = new Float64Array(n); for (let i = 0; i < n; i++) o[i] = y[i] + c1 * (i > 0 ? o[i - 1] : 0) + c2 * (i > 1 ? o[i - 2] : 0); y = o; }
+    y = Float64Array.from(y, (x, i) => x - (i ? y[i - 1] : 0)); let mx = 0; for (const x of y) mx = Math.max(mx, Math.abs(x));
+    return { samples: Float32Array.from(y, (x, i) => (i < pad || i > n - pad ? 0 : Math.min(1, (i - pad) / 4410, (n - pad - i) / 4410)) * 0.6 * x / mx + 0.002 * rnd()), sr: 44100 };
+  },
+  reading() {
+    const sr = 22050, wpm = 160 * (0.7 + 0.3 * DEMO_F), secs = PASSAGE.words / (wpm / 60), n = Math.round((secs + 3) * sr), x = new Float32Array(n); let seed = 3; const rnd = () => { seed = (seed * 1664525 + 1013904223) % 4294967296; return seed / 4294967296 - 0.5; };
+    for (let i = 0; i < n; i++) { const t = i / sr, inSp = t > 1.5 && t < 1.5 + secs, env = inSp ? Math.max(0, Math.sin(2 * Math.PI * 4 * t)) : 0; /* syllable bursts with real dips between them */ x[i] = (env * 0.25 + 0.0008) * rnd() * 2; }
+    return { samples: x, sr };
+  },
+  hand(sig) {
+    const fr = [], f = (sig === "pinch" ? 1.3 : 1.1) * (0.8 + 0.2 * DEMO_F), amp = (0.7 + 0.3 * DEMO_F); for (let i = 0; i < 300; i++) { const t = i / 30; fr.push({ t, c: 1.2 + 0.8 * amp * Math.cos(2 * Math.PI * f * t) * Math.exp(-0.03 * t) }); } return fr;
+  },
+  face() { const fr = []; for (let i = 0; i < 120; i++) { const t = i / 30, s = Math.sin(2 * Math.PI * 3 * t); fr.push({ t, open: 0.15 + 0.1 * s, width: 0.9 + 0.2 * Math.cos(2 * Math.PI * 0.5 * t), jaw: 1.1 + 0.25 * s }); } return fr; },
+};
+
+/* ------------------------------------------------------------------ steps */
+const PASSAGE = { text: DDK.PASSAGE, words: DDK.PASSAGE_WORDS, source: "default" };   // only used if the chat assistant is not available (then the standard passage is read, as before)
+const RUN = { values: {}, vowels: {}, widths: {}, readFrames: null, rows: [], done: [] };
+const retryNote = r => (r && r.reasons && r.reasons[0]) || "That one did not work";
+
+async function speechStep(st, idx) {
+  const isRead = st.kind === "read", maxS = isRead ? 75 : 7, tries = 3;
+  for (let attempt = 0; attempt < tries; attempt++) {
+    S.mode = "face"; S.live.face = null; S.rec = null; $("passage").hidden = !isRead; $("v-run").classList.toggle("reading", isRead); $("fin").hidden = true; if (isRead) $("passage").textContent = PASSAGE.text;
+    $("sname").textContent = st.name; $("shelp").textContent = st.help; ring(0); big(""); dotsUi(idx, RUN.done);
+    chip(isRead ? "Start reading when you are ready" : "Take a breath, then go", "");
+    let data, frames;
+    if (DEMO) { await sleep(900); ring(0.5); await sleep(700); data = isRead ? SIM.reading() : SIM.vowel(st.v); frames = SIM.face(); if (!isRead) frames = frames.map(f => ({ ...f, width: st.v === "i" ? 1.15 + 0.03 * Math.sin(f.t * 9) : st.v === "u" ? 0.62 + 0.03 * Math.sin(f.t * 9) : 0.9 })); }
+    else {
+      await sleep(1200);                                              // let the previous step's sound die away
+      S.manual = false; $("fin").hidden = false; $("fin").textContent = "Start recording now"; $("fin").onclick = () => { S.manual = true; };
+      let lastKick = 0;
+      const ok = await waitFor(() => {
+        if (S.tap.ctx.state !== "running" && performance.now() - lastKick > 1500) { lastKick = performance.now(); S.tap.ctx.resume().catch(() => {}); }   // some phones leave the audio engine suspended
+        if (DEBUG) { $("dbgline").hidden = false; $("dbgline").textContent = "waiting | level " + S.tap.lvl.toFixed(4) + " | floor " + S.floor.toFixed(4) + " | audio " + S.tap.ctx.state + " | samples " + S.tap.n; }
+        return voiced() || S.manual;
+      }, 90000); if (!ok) { chip("Did not hear you: tap Stop if you need to", "warn"); continue; }
+      const a = S.tap.mark() - Math.round(0.6 * S.tap.sr), t0 = performance.now(); S.rec = { frames: [], t0: t0 - 600 }; chip("Listening and watching...", "ok");
+      let voicedFor = 0, last = performance.now(), lastAct = last, ref = 0; const need = isRead ? Math.min(10, PASSAGE.words / 8) : 1.5, minRead = Math.max(14, PASSAGE.words / 4.5);   // reading: at least ~14-18 s and ~10 s of actual speech before it may stop by itself
+       S.finish = false; $("fin").hidden = false; $("fin").textContent = isRead ? "I have finished reading" : "Done"; $("fin").onclick = () => { S.finish = true; };
+      while (true) {
+        await sleep(50); const now = performance.now(), dt = (now - last) / 1000, el = (now - t0) / 1000; last = now;
+        const L = S.tap.lvl, hi = voiced(); if (hi && (!ref || L > 0.5 * ref)) ref = ref ? 0.97 * ref + 0.03 * L : L;                       // typical level while speaking
+        const active = hi && L > 0.25 * ref;                                                                          // quiet relative to the speaker, so boosted room noise after speech still counts as silence
+        if (active) { lastAct = now; voicedFor += dt; }
+        const quiet = (now - lastAct) / 1000;
+        ring(isRead ? el / (PASSAGE.words / 2.5) : el / 3, isRead ? Math.round(el) + "s" : "");
+        if (isRead && el > minRead && voicedFor > need && quiet > 0.4) chip("Finishing in " + Math.max(1, Math.ceil(2 - quiet)) + "...", "ok"); else chip(isRead ? "Recording. Tap Finish when you are done." : "Listening and watching...", "ok");
+        if (DEBUG) { $("dbgline").hidden = false; $("dbgline").textContent = "level " + L.toFixed(4) + " | speech ref " + ref.toFixed(4) + " | floor " + S.floor.toFixed(4) + " | voiced " + hi + " | active " + active + " | quiet " + quiet.toFixed(1) + "s | spoke " + voicedFor.toFixed(1) + "s (need " + need.toFixed(0) + ") | t " + el.toFixed(1) + "s"; } if (S.abort) throw new Error("aborted");
+        if (S.finish) break; if (isRead ? (el > minRead && voicedFor > need && quiet > 2.0) : (voicedFor > 1.5 && quiet > 0.5)) break; if (el > maxS) break;
+      }
+      $("fin").hidden = true; const b = S.tap.mark() + Math.round(0.3 * S.tap.sr); await sleep(320); data = { samples: S.tap.slice(a, b), sr: S.tap.sr }; frames = S.rec.frames; S.rec = null;
+    }
+    chip("Working it out...", "");
+    if (isRead) {
+      const m = DDK.analyzeReading(data.samples, data.sr, PASSAGE.words);
+      if (!m.valid) { chip(retryNote(m) + ". Let us try that again.", "warn"); await sleep(2200); continue; }
+      Object.assign(RUN.values, DDK.readingToValues(m)); RUN.readFrames = frames; RUN.rows.push(["Speaking rate", Math.round(m.wpm) + " words/min"]);
+    } else {
+      const m = Vowel.analyzeVowel(data.samples, data.sr);
+      if (!m.valid) { chip(retryNote(m) + ". Let us try that again.", "warn"); await sleep(2200); continue; }
+      RUN.vowels[st.v] = m; const w = frames.filter(f => f.open != null).map(f => f.width).sort((x, y) => x - y); RUN.widths[st.v] = w.length >= 10 ? w[w.length >> 1] : null;
+    }
+    RUN.done.push(st.id); chip("Got it", "ok"); ring(1, "ok"); await sleep(500); return true;
+  }
+  chip("Skipping this one for now", "warn"); await sleep(1200); return false;
+}
+
+/* Chat step: an ElevenLabs agent asks the doctor's questions conversationally. Speaking rate = words the speech-to-text heard from the patient / time they were speaking (convo.js).
+   Camera frames are kept for lip/jaw movement, but only while the patient is speaking. If the chat cannot start, the standard passage is read instead so the check-in never breaks. */
+const SDK_URL = "https://cdn.jsdelivr.net/npm/@elevenlabs/client@1.31.0/+esm";   // same pinned version as dictate.js
+const READ_FALLBACK = { id: "talk", kind: "read", name: "Read aloud", help: "Read the passage below at your normal pace. Start whenever you are ready.", short: "Chat" };
+async function ensureMic() {                       // the chat can leave the phone's microphone stopped or muted; the vowel steps need it
+  if (DEMO || !S.tap) return; await sleep(600); const tk = S.stream && S.stream.getAudioTracks()[0];
+  if (tk && tk.readyState === "live" && !tk.muted) { try { await S.tap.ready(); } catch (e) {} return; }
+  try {
+    const a = await navigator.mediaDevices.getUserMedia({ audio: { channelCount: 1, echoCancellation: false, noiseSuppression: false, autoGainControl: true } });
+    S.tap.stop(); if (S.extra) S.extra.getTracks().forEach(t => t.stop()); S.extra = a; S.tap = new Tap(a); await S.tap.ready();
+  } catch (e) { console.warn("could not reopen the microphone", e); }
+}
+async function talkStep(st, idx) {
+  S.mode = "face"; S.live.face = null; S.rec = null; S.finish = false; $("v-run").classList.add("reading"); $("passage").hidden = true;
+  $("sname").textContent = st.name; $("shelp").textContent = st.help; ring(0); big(""); dotsUi(idx, RUN.done);
+  const showTopics = list => { $("topics-l").innerHTML = list.map(q => `<li>${esc(q)}</li>`).join(""); $("topics").hidden = !list.length; };
+  const fallback = async why => { S.rec = null; $("topics").hidden = true; chip(why + " We will use a short reading instead.", "warn"); await sleep(2400); return speechStep({ ...READ_FALLBACK }, idx); };
+  const tr = Convo.createTracker(), GOAL_WORDS = 60, MAX_S = 480, say = t => { $("passage").hidden = false; $("passage").textContent = t; };
+  let conv = null, finishAt = 0, drainUntil = 0, ended = false, mode = "speaking", vadAt = 0, err = null, t0 = performance.now(), frames = [];
+  if (DEMO) {                                       // synthetic conversation through the real tracker: four answers at the demo's speaking rate
+    const wpm = 150 * (0.7 + 0.3 * DEMO_F); let t = 1000; chip("Demo: simulated chat", "ok"); showTopics(TOPICS);
+    for (const [i, words] of [30, 26, 34, 28].entries()) {
+      say(Convo.DEFAULT_QUESTIONS[i]); tr.mode("speaking", t); t += 2500; tr.mode("listening", t); t += 700;
+      const secs = words / (wpm / 60); for (let x = 0; x < secs * 1000; x += 50) tr.sample(true, t + x); t += secs * 1000; tr.text("word ".repeat(words)); t += 500;
+      ring(tr.words() / GOAL_WORDS, ""); await sleep(450);
+    }
+    frames = SIM.face();
+  } else {
+    chip("Connecting to the assistant...", "");
+    let sess = null; try { const r = await fetch("/api/eleven-session?agent=chat&patient=" + encodeURIComponent($("code").value.trim())); sess = r.ok ? await r.json() : null; } catch (e) {}
+    if (!sess || !sess.signedUrl) return fallback("The chat assistant is not available.");
+    let Conversation; try { ({ Conversation } = await import(SDK_URL)); } catch (e) { return fallback("Could not load the chat."); }
+    S.rec = { frames: [], t0: performance.now() }; t0 = S.rec.t0; showTopics(Array.isArray(sess.questions) && sess.questions.length ? sess.questions : TOPICS);
+    try {
+      conv = await Conversation.startSession({
+        signedUrl: sess.signedUrl, dynamicVariables: sess.dynamicVariables || {},
+        clientTools: { finish_conversation: async () => { if (!finishAt) finishAt = performance.now(); return "ok"; } },   // the agent says goodbye first, then calls this
+        onMessage: m => { if (!m || !m.message) return; if (m.source === "user") tr.text(m.message); else say(m.message); },
+        onModeChange: m => { if (m && m.mode) { mode = m.mode; tr.mode(m.mode, performance.now()); } },
+        onVadScore: v => { const sc = (v && (v.vadScore ?? v)) || 0; if (sc > 0.5) vadAt = performance.now(); },
+        onDisconnect: () => { ended = true; },
+        onError: m => { err = (m && m.message) || String(m); console.error("[elevenlabs] error", m); },
+      });
+    } catch (e) { console.error(e); return fallback("Could not start the chat."); }
+    $("fin").hidden = false; $("fin").textContent = "I am done chatting"; $("fin").onclick = () => { S.finish = true; };
+    try {
+      while (true) {
+        await sleep(50); const now = performance.now(), el = (now - t0) / 1000;
+        tr.sample(voiced() || now - vadAt < 300, now);                                   // sound on the phone's mic, or ElevenLabs' own voice detector
+        ring(Math.min(1, tr.words() / GOAL_WORDS), Math.round(el) + "s"); chip(mode === "speaking" ? "The assistant is talking" : "Your turn. Take your time", "ok");
+        if (S.abort) throw new Error("aborted");
+        if (S.finish && !drainUntil) drainUntil = now + 2000;                           // let the last transcript arrive before closing
+        if (drainUntil && now > drainUntil) break; if (ended || el > MAX_S) break;
+        if (finishAt && now - finishAt > 1500 && (mode === "listening" || now - finishAt > 8000)) break;
+      }
+    } finally { try { await conv.endSession(); } catch (e) {} }
+    frames = S.rec ? S.rec.frames : []; S.rec = null;
+  }
+  $("fin").hidden = true; $("passage").hidden = true; $("topics").hidden = true; chip("Working it out...", "");
+  const m = tr.result();
+  if (!m.valid && err && tr.words() < Convo.MIN_WORDS) return fallback("The chat was interrupted.");
+  RUN.readFrames = DEMO ? frames : Convo.framesIn(frames, m.chunks, t0);
+  if (m.valid) { Object.assign(RUN.values, Convo.toValues(m)); RUN.rows.push(["Speaking rate (from the chat)", Math.round(m.wpm) + " words/min"]); }
+  else { RUN.rows.push(["Speaking rate", "not enough speech this time"]); chip(m.reasons[0] + ". Moving on.", "warn"); await sleep(2600); }
+  await ensureMic(); RUN.done.push(st.id); chip("Got it", "ok"); ring(1, "ok"); await sleep(500); return true;
+}
+
+async function handStep(st, idx) {
+  const names = { grip: "fist", pinch: "pinch" };
+  for (let attempt = 0; attempt < 3; attempt++) {
+    S.mode = "hand"; S.sig = st.sig; $("v-run").classList.remove("reading"); $("fin").hidden = true; $("passage").hidden = true; S.live.hand = null; S.rec = null; $("passage").hidden = true;
+    $("sname").textContent = st.name; $("shelp").textContent = st.help; ring(0); big(""); dotsUi(idx, RUN.done);
+    let frames;
+    if (DEMO) { chip("Hand found. Hold still...", "ok"); await sleep(900); big("GO"); chip("Keep going...", "ok"); for (let i = 1; i <= 10; i++) { ring(i / 10, (10 - i) + "s"); await sleep(120); } frames = SIM.hand(st.sig); }
+    else {
+      chip(`Show your ${st.side === "r" ? "right" : "left"} hand to the camera`, "warn"); let stable = 0, lastT = performance.now();
+      await waitFor(() => { const n = performance.now(), d = n - lastT; lastT = n; stable = S.live.hand != null ? stable + d : 0; if (stable > 0 && stable < 1200) chip("Hand found. Hold still...", "ok"); else if (stable === 0) chip(`Show your ${st.side === "r" ? "right" : "left"} hand to the camera`, "warn"); return stable >= 1200; }, 120000);
+      big("GO"); chip("Keep going...", "ok"); const t0 = performance.now(); S.rec = { frames: [], t0 };
+      while (performance.now() - t0 < 10000) { await sleep(60); const el = (performance.now() - t0) / 1000; ring(el / 10, Math.ceil(10 - el) + "s"); if (S.abort) throw new Error("aborted"); if (el > 1.5) big(""); }
+      frames = S.rec.frames; S.rec = null;
+    }
+    big(""); chip("Working it out...", "");
+    const m = Grip.analyze(frames, st.sig === "pinch" ? KgEst.PINCH_OPTS : {});
+    if (!m.valid) { chip(retryNote(m) + ". Let us try that again.", "warn"); await sleep(2400); continue; }
+    if (st.sig === "grip") Object.assign(RUN.values, Grip.toLabs(m, "grip", st.side));
+    Object.assign(RUN.values, KgEst.toValues(m, st.sig, st.side));
+    RUN.rows.push([(st.sig === "grip" ? "Fist, " : "Pinch, ") + (st.side === "r" ? "right" : "left"), m.rate.toFixed(1) + " per second" + (st.sig === "grip" && m.decrement != null ? ", " + (m.decrement < -10 ? "tiring " + Math.round(-m.decrement) + "%" : "steady") : "")]);
+    RUN.done.push(st.id); chip("Got it", "ok"); ring(1, "ok"); await sleep(500); return true;
+  }
+  chip("Skipping this one for now", "warn"); await sleep(1200); return false;
+}
+
+function finishSpeechDerived() {
+  const sp = Vowel.vowelSpace(RUN.vowels);
+  if (sp) { Object.assign(RUN.values, Vowel.toValues(sp)); RUN.rows.push(["Vowel space", sp.vsa.toFixed(2) + " kHz²"], ["Vowel centralization", sp.vcr.toFixed(2)]); }
+  const wr = RUN.widths.i != null && RUN.widths.u != null ? RUN.widths.i - RUN.widths.u : null, js = RUN.readFrames ? LipJaw.summarize(RUN.readFrames) : null;
+  Object.assign(RUN.values, LipJaw.toValues(js, wr));
+  if (RUN.values.lip_range != null) RUN.rows.push(["Lip spread (ee to oo)", RUN.values.lip_range.toFixed(2)]);
+  if (RUN.values.jaw_speed != null) RUN.rows.push(["Jaw movement speed", RUN.values.jaw_speed.toFixed(1)]);
+}
+
+/* ------------------------------------------------------------------ session lifecycle */
+const show = id => { for (const v of ["v-intro", "v-onb", "v-run", "v-res"]) { $(v).hidden = v !== id; $(v).style.display = v === id ? "flex" : "none"; } window.scrollTo(0, 0); };
+function teardown() { S.running = false; S.abort = true; if (S.stream) S.stream.getTracks().forEach(t => t.stop()); S.stream = null; if (S.extra) S.extra.getTracks().forEach(t => t.stop()); S.extra = null; if (S.tap) S.tap.stop(); S.tap = null; S.rec = null; S.mode = null; }
+$("quit").onclick = () => { teardown(); show("v-intro"); };
+
+/* ------------------------------------------------------------------ first-time onboarding on the phone: the symptom questionnaire, then interests, the chat topics and consent.
+   Shown once, when this patient code has no record yet. Answers go to the care team; the phone never shows the patient a tier or a diagnosis.
+   The one exception is "started suddenly", which can be an emergency: the check-in stops and the patient is told to get urgent help. */
+let TOPICS = [];                                   // the doctor's questions for this patient, shown on screen so nothing is a surprise
+const SYM = g => Triage.SYMPTOMS.filter(s => s.group === g && s.key !== "reflex");   // "reflex" is an exam finding a patient cannot answer
+const ONB = [
+  { k: "WELCOME", h: "Hi, let us get you set up", p: "This takes a few minutes and only happens once. Your answers go to your care team, who will look at them with you. After this, every check-in goes straight to the chat.",
+    info: [["Some questions about your symptoms", "Tick what fits. Skip anything that does not apply."], ["A relaxed chat", "Talk about your day with a friendly voice assistant. About three minutes."], ["Three sounds and your hands", "Say ee, ah and oo, then squeeze and pinch toward the camera."]] },
+  { k: "ONE QUICK CHECK", h: "Did it start suddenly?", p: "Most importantly, we need to know if anything came on fast.", qs: [{ key: "sudden", q: "Did your symptoms start suddenly, within minutes or hours, like a stroke?" }], urgent: true },
+  { k: "HOW IT STARTED", h: "How have things changed?", p: "Tick everything that fits.", qs: Triage.PATTERN, months: true },
+  { k: "MUSCLES", h: "Muscles and movement", p: "Tick anything you have noticed lately. Skip what does not apply.", qs: [...SYM("LMN"), ...SYM("UMN")] },
+  { k: "SPEECH AND BREATHING", h: "Speech, swallowing and breathing", p: "Tick anything you have noticed lately.", qs: [...SYM("bulbar"), ...SYM("resp")] },
+  { k: "ANYTHING ELSE", h: "Anything else?", p: "Tick anything that applies.", qs: [...SYM("other"), ...Triage.RED_FLAGS] },
+  { k: "BACKGROUND", h: "A little background", p: "These help your care team understand your situation.", qs: Triage.RISKS },
+  { k: "ABOUT YOU", h: "What matters most to you?", p: "Pick as many as you like. The assistant can chat about the things you care about.", multi: "matters" },
+  { k: "THE CHAT", h: "What we will talk about", p: "Your care team chose these. There is nothing to prepare: answer in your own words, and take your time.", topics: true },
+  { k: "BEFORE WE START", h: "Your voice and your privacy", p: "Please read this, then tick the box to begin.", consent: true },
+];
+function runOnboarding(code) {                     // resolves true when finished, false if the patient goes Back from the first screen
+  return new Promise(resolve => {
+    const sel = { ans: new Set(), matters: new Set(), consent: false, months: "" }; let i = 0, urgent = false; show("v-onb");
+    const msg = $("onb-msg"), card = (t, s, on, attr) => `<button type="button" ${attr} class="opt${on ? " on" : ""}" aria-pressed="${!!on}"><b>${esc(t)}</b>${s ? `<small>${esc(s)}</small>` : ""}<i aria-hidden="true">✓</i></button>`;
+    const post = async body => { const r = await fetch("/api/patient/onboard", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ patient: code, ...body }) }); let j = null; try { j = await r.json(); } catch (e) {} if (!r.ok) throw new Error((j && j.error) || "request failed (" + r.status + ")"); return j; };
+    function emergency() {                         // sudden onset: stop here, give the advice, tell the care team
+      urgent = true; msg.textContent = ""; msg.className = "msg"; $("onb-k").textContent = "PLEASE READ"; $("onb-h").textContent = "Please get help now"; $("onb-p").textContent = "";
+      $("onb-body").innerHTML = `<div class="glass card" style="border-color:var(--bad)"><p style="font-size:16px;line-height:1.5">Symptoms that start suddenly, over minutes or hours, can be a medical emergency such as a stroke. <b>Please call your local emergency number or get urgent medical help now.</b></p><p class="small" style="margin-top:10px;font-size:14px">This check-in is not designed for that situation, so please do not continue it.</p><p class="small" id="onb-told" style="margin-top:10px;font-size:14px"></p></div>`;
+      $("onb-next").hidden = true; $("onb-dots").innerHTML = ""; if (!DEMO) post({ answers: { sudden: true } }).then(() => { $("onb-told").textContent = "We have let your care team know."; }).catch(() => {});
+    }
+    function draw() {
+      const s = ONB[i], last = i === ONB.length - 1; urgent = false; msg.textContent = ""; msg.className = "msg"; $("onb-next").hidden = false;
+      $("onb-k").textContent = s.k; $("onb-h").textContent = s.h; $("onb-p").textContent = s.p; window.scrollTo(0, 0);
+      let h = "";
+      if (s.info) h = s.info.map(x => `<div class="opt info"><b>${esc(x[0])}</b><small>${esc(x[1])}</small></div>`).join("");
+      else if (s.qs) h = s.qs.map(x => card(x.q, "", sel.ans.has(x.key), `data-q="${x.key}"`)).join("") + (s.months ? `<div class="glass card"><label class="small" for="onb-months" style="display:block;margin-bottom:6px;font-size:14px">About how many months ago did the first symptom start? (optional)</label><input type="text" inputmode="decimal" id="onb-months" autocomplete="off" placeholder="e.g. 6" value="${esc(sel.months)}"></div>` : "");
+      else if (s.multi) h = Convo.ONBOARD[s.multi].map(x => card(x[1], x[2], sel[s.multi].has(x[0]), `data-id="${x[0]}"`)).join("");
+      else if (s.topics) h = `<div class="glass card topics"><ol>${(TOPICS.length ? TOPICS : Convo.DEFAULT_QUESTIONS).map(q => `<li>${esc(q)}</li>`).join("")}</ol></div>`;
+      else if (s.consent) h = `<div class="glass card"><p class="small" style="font-size:14px;color:var(--ink)">During the chat, your voice is sent to a speech service (ElevenLabs) so the assistant can hear and answer you. Your camera video stays on this phone. This app does not save the recording or what was said, and only a few summary numbers go to your care team, when you tap Share. Your answers to the questions are sent to your care team now. You can stop at any time.</p></div>` + card("I understand, and I am happy to go ahead", "Your voice is used for the chat only", sel.consent, "data-consent=\"1\"");
+      $("onb-body").innerHTML = h; $("onb-dots").innerHTML = ONB.map((_, n) => `<i class="${n < i ? "on" : ""} ${n === i ? "cur" : ""}"></i>`).join("");
+      $("onb-next").textContent = last ? "Start my check-in" : "Continue"; $("onb-next").disabled = !!s.consent && !sel.consent;
+      $("onb-body").querySelectorAll("button.opt[data-q]").forEach(b => b.onclick = () => { const k = b.dataset.q; if (sel.ans.has(k)) sel.ans.delete(k); else sel.ans.add(k); draw(); });
+      $("onb-body").querySelectorAll("button.opt[data-id]").forEach(b => b.onclick = () => { const set = sel[s.multi], id = b.dataset.id; if (set.has(id)) set.delete(id); else set.add(id); draw(); });
+      const mi = $("onb-months"); if (mi) mi.oninput = () => { sel.months = mi.value.trim(); };
+      const c = $("onb-body").querySelector("button[data-consent]"); if (c) c.onclick = () => { sel.consent = !sel.consent; draw(); };
+    }
+    $("onb-back").onclick = () => { if (urgent) { draw(); return; } if (i === 0) { show("v-intro"); resolve(false); } else { i--; draw(); } };
+    $("onb-next").onclick = async () => {
+      const s = ONB[i]; if (s.urgent && sel.ans.has("sudden")) return emergency();
+      if (i < ONB.length - 1) { i++; draw(); return; }
+      $("onb-next").disabled = true; msg.className = "msg"; msg.textContent = "Saving...";
+      try {
+        if (!DEMO) { const answers = {}; sel.ans.forEach(k => { answers[k] = true; }); const r = await post({ answers, months: sel.months === "" ? null : sel.months, matters: [...sel.matters], consent: true }); if (r.emergency) { emergency(); return; } }
+        resolve(true);                              // resolved inside this tap, so the camera and microphone prompts that follow still count as user-initiated
+      } catch (e) { msg.textContent = "Could not save: " + e.message + ". Please try again."; msg.className = "msg bad"; $("onb-next").disabled = false; }
+    };
+    draw();
+  });
+}
+async function ensureOnboarded(code) {             // false = the patient went Back, do not start
+  if (DEMO && !Q.has("onboard")) { TOPICS = Convo.DEFAULT_QUESTIONS.slice(); return true; }
+  let st = null; try { const r = await fetch("/api/patient/status?patient=" + encodeURIComponent(code)); if (r.ok) st = await r.json(); else console.warn("onboarding check skipped: /api/patient/status answered " + r.status + (r.status === 404 ? " (restart node server.js: it is running older code)" : r.status === 401 ? " (open the site with ?key=YOUR_KEY first)" : "")); } catch (e) { console.warn("onboarding check skipped: server not reachable", e); }
+  if (!st) return true;                            // server not reachable: skip, the check-in still works
+  TOPICS = Array.isArray(st.questions) ? st.questions : []; return st.known ? true : runOnboarding(code);
+}
+
+
+$("begin").onclick = async () => {
+  const code = $("code").value.trim(), im = $("imsg"); im.className = "msg";
+  if (!/^[A-Za-z0-9_-]{2,32}$/.test(code)) { im.textContent = "Please enter the patient code from your clinic."; im.className = "msg bad"; return; }
+  try { localStorage.setItem("ns_code", code); } catch (e) {}
+  Object.assign(RUN, { values: {}, vowels: {}, widths: {}, readFrames: null, rows: [], done: [] }); S.abort = false;
+  $("begin").disabled = true; im.textContent = "Checking your code...";
+  try { if (!(await ensureOnboarded(code))) { $("begin").disabled = false; im.textContent = ""; return; } } catch (e) { /* onboarding is best effort: carry on to the check-in */ }
+  im.textContent = DEMO ? "Demo mode: no camera needed." : "Asking for camera and microphone, and loading the tracking models (needs internet the first time)...";
+  try {
+    if (!DEMO) {
+      S.stream = await openStream(); vid.srcObject = S.stream; await vid.play(); S.tap = new Tap(S.stream); await S.tap.ready();
+      ovl.width = vid.videoWidth || 640; ovl.height = vid.videoHeight || 480; await loadModels(); S.running = true; show("v-run"); requestAnimationFrame(loop);
+      chip("Stay quiet for a second...", ""); $("sname").textContent = "Getting ready"; $("shelp").textContent = "Measuring the room noise so quiet voices are heard properly."; ring(0); dotsUi(-1, []);
+      await sleep(400); const t0 = S.tap.n, s0 = performance.now(), ls = []; while (performance.now() - s0 < 1200) { ls.push(S.tap.lvl); await sleep(50); } ls.sort((a, b) => a - b); S.floor = ls[ls.length >> 1] || 0.005;
+    } else { S.running = false; show("v-run"); }
+    for (let i = 0; i < STEPS.length; i++) { const st = STEPS[i]; if (st.kind === "hand") await handStep(st, i); else if (st.kind === "talk") await talkStep(st, i); else await speechStep(st, i); }
+    finishSpeechDerived(); teardown(); showResults(code);
+  } catch (e) {
+    if (e && e.message === "aborted") return;
+    teardown(); show("v-intro"); im.textContent = "Could not start: " + permMsg(e); im.className = "msg bad";
+  } finally { $("begin").disabled = false; }
+};
+
+/* ------------------------------------------------------------------ results, sharing, progress */
+function showResults(code) {
+  show("v-res"); $("rdate").textContent = new Date().toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" }) + " · " + Labs.periodOf(new Date());
+  const n = Object.keys(RUN.values).length; $("rhead").textContent = n ? "Nice work." : "We could not get a clean reading.";
+  $("rtbl").innerHTML = RUN.rows.map(r => `<tr><td>${esc(r[0])}</td><td>${esc(r[1])}</td></tr>`).join("") || `<tr><td>Nothing was measured reliably this time. Try again in good light and a quiet room.</td><td></td></tr>`;
+  $("rnote").textContent = "These numbers mean most compared with your own earlier check-ins, on the same phone in the same spot. They are not a diagnosis. Nothing has been sent yet.";
+  $("share").hidden = !n; $("share").disabled = false; $("smsg").textContent = ""; $("prog").hidden = true; loadProgress(code);
+}
+$("share").onclick = async () => {
+  const code = $("code").value.trim(), m = $("smsg"); $("share").disabled = true; m.className = "msg"; m.textContent = "Sending...";
+  try { const r = await Companion.save(code, RUN.values, { source: "companion" }); m.textContent = "Shared with your care team" + (r.via === "local" ? " (stored on this device until the server is reachable)." : "."); m.className = "msg ok"; $("share").hidden = true; await loadProgress(code); }
+  catch (e) { m.textContent = "Could not send: " + e.message; m.className = "msg bad"; $("share").disabled = false; }
+};
+$("again").onclick = () => { show("v-intro"); };
+
+const TREND = [["speech_wpm", "Speaking rate", "words/min", 0], ["vowel_vsa", "Vowel space", "kHz²", 2], ["jaw_speed", "Jaw speed", "", 1], ["grip_score_r", "Fist, right", "", 2], ["grip_score_l", "Fist, left", "", 2], ["pinch_score_r", "Pinch, right", "", 2], ["pinch_score_l", "Pinch, left", "", 2]];
+function spark(vals, col) {
+  if (vals.length < 2) return ""; const w = 300, h = 34, lo = Math.min(...vals), hi = Math.max(...vals), sp = hi - lo || 1;
+  const pts = vals.map((v, i) => `${(i / (vals.length - 1) * w).toFixed(1)},${(h - 4 - (v - lo) / sp * (h - 8)).toFixed(1)}`).join(" ");
+  return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true"><polyline points="${pts}" fill="none" stroke="${col}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/></svg>`;
+}
+async function loadProgress(code) {
+  try {
+    const r = await fetch("/api/measurements?patient=" + encodeURIComponent(code)); if (!r.ok) throw 0; const recs = await r.json(); if (!Array.isArray(recs) || !recs.length) throw 0;
+    const sm = Measures.summary(recs, code), act = sm.activity, rows = [];
+    for (const [id, label, unit, dp] of TREND) {
+      const s = Measures.series(recs, code, id).filter(x => x.source === "companion"); if (!s.length) continue; const m = sm.metrics[id], last = s[s.length - 1].v;
+      let tag = "", est = "", col = "var(--sage-d)";
+      if (s.length >= 3 && m && isFinite(m.pctOfBaseline)) { const p = Math.round(m.pctOfBaseline); tag = p >= 95 ? `<span class="tag">steady</span>` : p >= 85 ? `<span class="tag warn">a little lower</span>` : `<span class="tag warn">lower than your baseline</span>`; if (p < 95) col = "var(--warn)"; }
+      const kind = id.startsWith("grip") ? "grip" : id.startsWith("pinch") ? "pinch" : null;
+      if (kind) { const clinic = recs.filter(x => x.metric === `${kind}_kg_${id.slice(-1)}` && x.source === "clinic").map(x => ({ t: x.t, kg: x.value })), e = KgEst.estimate(s.map(x => ({ t: x.t, v: x.v })), clinic); if (e) est = ` <span class="tag est">≈ ${e.est[e.est.length - 1].kg} kg estimate</span>`; }
+      rows.push(`<div class="trend"><div class="n">${esc(label)}${tag}${est}</div><div class="v">${+last.toFixed(dp)} ${esc(unit)}</div>${spark(s.slice(-30).map(x => x.v), col)}</div>`);
+    }
+    if (!rows.length) throw 0;
+    const first = act.sessions <= 1; $("pnote").textContent = first ? "Your baseline is set. A few check-ins a week let your care team see your trend, not just a single day." : `${act.sessions} check-ins · ${act.streak}-day streak · shared with your care team`;
+    $("ptrends").innerHTML = rows.join("") + `<p class="small" style="margin-top:10px">Camera scores track how far and how fast you move, not force. The kg figure is an estimate anchored to your clinic dynamometer reading.</p>`; $("prog").hidden = false;
+  } catch (e) { $("prog").hidden = true; }
+}
+
+/* ------------------------------------------------------------------ optional walk (phone motion sensor) */
+$("walkgo").onclick = async () => {
+  const m = $("wmsg"); m.className = "msg"; $("walkgo").disabled = true;
+  try {
+    if (typeof DeviceMotionEvent !== "undefined" && DeviceMotionEvent.requestPermission) { if ((await DeviceMotionEvent.requestPermission()) !== "granted") throw new Error("motion permission was denied"); }
+    const samples = [], on = e => { const a = e.accelerationIncludingGravity; if (a && a.x != null) samples.push({ t: performance.now() / 1000, x: a.x, y: a.y, z: a.z }); }; window.addEventListener("devicemotion", on);
+    for (let i = 5; i > 0; i--) { m.textContent = "Put the phone away. Starting in " + i + "..."; await sleep(1000); } const t0 = performance.now(); samples.length = 0;
+    while (performance.now() - t0 < 60000) { m.textContent = "Walking... " + Math.ceil(60 - (performance.now() - t0) / 1000) + "s"; await sleep(500); } window.removeEventListener("devicemotion", on);
+    const g = GaitFeatures.analyze(samples); if (!g.ok) { m.textContent = "Could not read the walk: " + g.bad.join("; "); m.className = "msg bad"; return; }
+    const r = await Companion.save($("code").value.trim(), { gait_cadence: +g.cadence.toFixed(0), gait_stride_cv: +g.stride_cv_pct.toFixed(1) }, { source: "companion" }); m.textContent = `Walk saved: ${g.cadence.toFixed(0)} steps/min.`; m.className = "msg ok"; loadProgress($("code").value.trim());
+  } catch (e) { m.textContent = "Could not do the walk test: " + ((e && e.message) || e); m.className = "msg bad"; }
+  finally { $("walkgo").disabled = false; }
+};
+
+try { $("code").value = Q.get("patient") || localStorage.getItem("ns_code") || ""; } catch (e) { $("code").value = Q.get("patient") || ""; }
+window.addEventListener("pagehide", teardown);
+</script>
+</body>
+</html>

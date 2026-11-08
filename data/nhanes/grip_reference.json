@@ -1,0 +1,28 @@
+{
+ "source": "NHANES 2011-2012 MGX_G + DEMO_G (CDC/NCHS)",
+ "filter": "age 40-79, complete exam (MGDEXSTS=1), best of 3 per hand, weaker hand, unweighted",
+ "n": 2737,
+ "all": {
+  "p5": 18.1,
+  "p25": 24.8,
+  "p50": 30.9,
+  "p75": 39.7,
+  "p95": 50.6
+ },
+ "male": {
+  "p5": 25.0,
+  "p25": 33.8,
+  "p50": 39.7,
+  "p75": 45.4,
+  "p95": 54.3,
+  "n": 1348
+ },
+ "female": {
+  "p5": 16.6,
+  "p25": 22.1,
+  "p50": 25.4,
+  "p75": 29.4,
+  "p95": 35.1,
+  "n": 1389
+ }
+}

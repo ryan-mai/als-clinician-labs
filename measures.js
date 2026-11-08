@@ -12,6 +12,8 @@
     METRICS["grip_decrement_" + s] = M("Fist fatigue", "%", "higher", -100, 100, R, { status: false });
     METRICS["grip_kg_" + s] = M("Grip strength", "kg", "higher", 0, 120, R, { score: true });
     METRICS["pinch_kg_" + s] = M("Key pinch", "kg", "higher", 0, 40, R, { score: true });
+    METRICS["grip_score_" + s] = M("Fist strength score (camera)", "score", "higher", .01, 100, R, { score: true });
+    METRICS["pinch_score_" + s] = M("Pinch strength score (camera)", "score", "higher", .01, 100, R, { score: true });
   }
   for (const [s, R] of [["r", "footR"], ["l", "footL"]]) {
     METRICS["foot_rate_" + s] = M("Toe-lift rate", "/s", "higher", .1, 8, R);
@@ -27,6 +29,10 @@
     choline_umol: M("Choline", "umol/L", "higher", 0, 50, null, { status: false }),
     basophil_count: M("Basophil count", "x10^9/L", "higher", 0, 5, null, { status: false }),
     eosinophil_count: M("Eosinophil count", "x10^9/L", "lower", 0, 5, null, { status: false }),
+    vowel_vsa: M("Vowel space area", "kHz^2", "higher", .005, 3, "bulbar", { score: true }),
+    vowel_vcr: M("Vowel centralization", "ratio", "lower", .3, 3, "bulbar"),
+    lip_range: M("Lip spread range", "eye widths", "higher", .01, 2, "bulbar"),
+    jaw_speed: M("Jaw movement speed", "eye widths/s", "higher", .01, 30, "bulbar"),
     ddk_rate: M("Speech rate (pa-ta-ka)", "syll/s", "higher", 1, 12, "bulbar", { score: true }),
     ddk_cv: M("Speech rhythm variability", "%", "lower", 0, 100, "bulbar"),
     ddk_pauses: M("Speech pauses", "count", "lower", 0, 50, "bulbar", { status: false }),

@@ -1,0 +1,10 @@
+{
+  "_note": "What matters to each patient, in their own words. Used only to write the reading passage for the phone check-in (server.js /api/passage). No names or medical details are sent to Gemini. Synthetic case; ALEX-CASE hopes come from the BioHacks 2026 case file (Alex Chen's own words).",
+  "ALEX-CASE": {
+    "hopes": [
+      "Be back in a classroom teaching biology in June.",
+      "Be the one who cooks Sunday dinner for the family, even if it takes all afternoon.",
+      "Have my kids remember me as their dad, not as a patient."
+    ]
+  }
+}

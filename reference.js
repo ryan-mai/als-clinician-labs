@@ -5,7 +5,7 @@
   const C = (lo, hi, text) => ({ lo, hi, text }), P = (v, text) => ({ v, text });
   const SECTIONS = [
     { id: "physical", title: "Physical measures", note: "ALS typically weakens and wastes the thenar (thumb-base) hand muscles and affects hand muscles unevenly, often on one side.", rows: [
-      { id: "grip", name: "Grip strength", unit: "kg", axis: [0, 60], metrics: ["grip_kg_r", "grip_kg_l"], pick: "min", control: P(48, "About 48 kg"), als: P(13.9, "13.9 kg") },
+      { id: "grip", name: "Grip strength", unit: "kg", axis: [0, 60], metrics: ["grip_kg_r", "grip_kg_l"], pick: "min", control: C(18.1, 50.6, "18-51 kg (NHANES 5th-95th pct, age 40-79)"), als: P(13.9, "13.9 kg") },
       { id: "pinch", name: "Key pinch", unit: "kg", axis: [0, 14], metrics: ["pinch_kg_r", "pinch_kg_l"], pick: "min", control: P(11, "About 11 kg"), als: C(2, 3, "2-3 kg") },
       { id: "wpm", name: "Speaking rate", unit: "words/min", axis: [90, 200], metrics: ["speech_wpm"], control: C(150, 190, "150-190 words/min"), als: C(119, 168, "119-168 words/min"), note: "Ranges overlap heavily: one reading alone does not separate the groups." },
       { id: "walk", name: "10 m walk", unit: "s", axis: [0, 30], metrics: ["walk10m_s"], control: C(0, 8, "Under 8 s"), als: C(7.5, 30, "7.5 to 25+ s") } ] },
