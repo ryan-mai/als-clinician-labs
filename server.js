@@ -207,11 +207,11 @@ function createApp(opts = {}) {
       const t0 = Date.now(), series = await store.weekly(pt, ms); return json(res, 200, { series, source: store.kind, ms: Date.now() - t0 });
     }
     if ((p === "/api/patients" || p === "/api/cohort-insights") && req.method === "GET") {   // care-team roster (protect a shared site with ACCESS_TOKEN)
-      const now = Date.now(), listed = await store.patients(60), recs = [];
+      const now = Date.now(), listed = await store.patients(100), recs = [];
       for (let i = 0; i < listed.length; i += 10) for (const part of await Promise.all(listed.slice(i, i + 10).map(x => store.forPatient(x.patient)))) recs.push(...part);
       const extra = [...Object.keys(readPlans()), ...Object.keys(readMap(onboardFile))].filter(codeOk);
       const roster = Roster.buildRoster(recs, clinicians.allTriage(), extra, now);
-      if (p === "/api/patients") return json(res, 200, { ...roster, truncated: listed.length >= 60 });
+      if (p === "/api/patients") return json(res, 200, { ...roster, truncated: listed.length >= 100 });
       const facts = Roster.insightFacts(roster.patients), tpl = Roster.templateInsights(roster.patients, roster.cohort);
       if (!env.GEMINI_API_KEY || !facts.length) return json(res, 200, { ...tpl, note: facts.length ? "GEMINI_API_KEY not set" : undefined });
       const key = "cohort" + crypto.createHash("sha256").update(JSON.stringify(facts)).digest("hex"), c = reportCache.get(key);

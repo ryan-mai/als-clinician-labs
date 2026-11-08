@@ -49,7 +49,14 @@
 
   /* list: controls + pill rows */
   .tools { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin:22px 0 10px; } .tools h2 { margin-right:auto; font-size:18px; }
-  .tools select, .tools input { font:inherit; font-size:14px; padding:9px 14px; border-radius:99px; border:1px solid var(--glass-line); background:var(--card); color:var(--ink); } .tools input { width:150px; }
+  .tools h2 { margin-right:0; } .tools input { font:inherit; font-size:14px; padding:10px 16px; border-radius:99px; border:1px solid var(--glass-line); background:var(--card); color:var(--ink); width:170px; outline:none; } .tools input:focus-visible { border-color:var(--ink); }
+  .dd { position:relative; margin-left:auto; }
+  .ddb { display:inline-flex; align-items:center; gap:8px; font:inherit; font-size:14px; padding:10px 14px 10px 18px; border-radius:99px; border:1px solid var(--glass-line); background:var(--card); color:var(--ink); cursor:pointer; backdrop-filter:blur(18px); -webkit-backdrop-filter:blur(18px); }
+  .ddb:hover, .ddb[aria-expanded="true"] { border-color:var(--ink); } .ddb:focus-visible { outline:2px solid var(--ink); outline-offset:2px; } .ddb span { color:var(--mute); } .ddb b { font-weight:500; }
+  .ddb svg { width:16px; height:16px; transition:transform .15s; } .ddb[aria-expanded="true"] svg { transform:rotate(180deg); }
+  .ddm { position:absolute; right:0; top:calc(100% + 8px); z-index:30; min-width:264px; margin:0; padding:6px; list-style:none; background:var(--page); border:1px solid var(--glass-line); border-radius:26px; box-shadow:0 16px 40px rgba(20,26,22,.22); }
+  .ddm li { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 14px 10px 16px; border-radius:99px; cursor:pointer; font-size:14px; }
+  .ddm li:hover, .ddm li.act { background:var(--sage-l); } .ddm li[aria-selected="true"] { background:var(--pill); color:var(--page); } .ddm li svg { width:16px; height:16px; visibility:hidden; } .ddm li[aria-selected="true"] svg { visibility:visible; }
   .plist { display:grid; grid-template-columns:repeat(auto-fill,minmax(min(100%,540px),1fr)); gap:12px; }
   .pt { text-align:left; font:inherit; color:var(--ink); cursor:pointer; display:grid; gap:10px; padding:14px 20px 14px 18px; border-radius:34px; background:var(--card); border:1px solid var(--glass-line); box-shadow:var(--shadow); backdrop-filter:blur(18px); -webkit-backdrop-filter:blur(18px); transition:transform .12s, background .12s; }
   .pt:hover, .pt:focus-visible { transform:translateY(-2px); background:var(--card-solid); outline:none; } .pt:focus-visible { box-shadow:0 0 0 2px var(--ink); }
@@ -93,8 +100,10 @@
   <div class="tools">
     <h2 id="lh">All patients</h2>
     <input id="q" type="search" placeholder="Find a code" aria-label="Find a patient code" autocomplete="off">
-    <label class="mute" style="font-size:13px" for="sort">Sort</label>
-    <select id="sort"><option value="attn">Needs attention first</option><option value="long">Longest in the programme</option><option value="drop">Biggest decline</option><option value="quiet">Longest since a check-in</option><option value="code">Code A to Z</option></select>
+    <div class="dd" id="dd">
+      <button class="ddb" id="ddb" type="button" aria-haspopup="listbox" aria-expanded="false" aria-controls="ddm"><span>Sort</span><b id="ddv"></b><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 6l4.5 4.5L12.5 6"/></svg></button>
+      <ul class="ddm" id="ddm" role="listbox" aria-label="Sort patients" tabindex="-1" hidden></ul>
+    </div>
   </div>
   <div class="plist" id="plist"></div>
   <p class="fine">Status compares each person with their own first week, not with other people. Motor score is the average across the camera and clinic measures that are tracked over time. Symptom rules adapted from the team's als_triage.py; the patient answers on their phone, so these are self-reported answers, not an examination. Prototype decision-support aid. It does not diagnose ALS and cannot replace clinical judgement or specialist evaluation.</p>
@@ -184,7 +193,7 @@ function pill(p) {
 }
 function visible() {
   const f = FILTERS.find(x => x[0] === FILTER)[3], q = $("q").value.trim().toLowerCase();
-  return ROSTER.filter(f).filter(p => !q || p.code.toLowerCase().includes(q)).sort(SORTS[$("sort").value]);
+  return ROSTER.filter(f).filter(p => !q || p.code.toLowerCase().includes(q)).sort(SORTS[SORT]);
 }
 function renderList() {
   const v = visible(), name = FILTERS.find(x => x[0] === FILTER)[1];
@@ -248,12 +257,28 @@ async function loadRoster() {
   try {
     const j = await api("/api/patients"); ROSTER = j.patients;
     for (const c of pending) { if (ROSTER.some(p => p.code === c)) pending.delete(c); else ROSTER.push({ code: c, level: "new", quiet: false, priority: 20, motorScore: null, weeks: 0, daysSince: null, checkins: 0, checkins28: 0, tier: null, emergency: false, changes: [], regions: [], trajectory: [], hasReadings: false }); }
-    const n = ROSTER.length; $("rsub").textContent = n ? `${n} patient${n > 1 ? "s" : ""} registered with the care team${j.truncated ? " (showing the 60 most recent)" : ""}. Sorted by who needs a look first.` : "No patients yet.";
+    const n = ROSTER.length; $("rsub").textContent = n ? `${n} patient${n > 1 ? "s" : ""} registered with the care team${j.truncated ? " (showing the 100 most recent)" : ""}. Sorted by who needs a look first.` : "No patients yet.";
     renderStats(); renderList(); renderCharts();
   } catch (e) { $("rsub").textContent = "Could not load the roster: " + e.message; }
 }
 $("stats").onclick = e => { const b = e.target.closest("[data-f]"); if (!b) return; FILTER = b.dataset.f; renderStats(); renderList(); };
-$("sort").onchange = renderList; $("q").oninput = renderList; $("airef").onclick = () => loadAi(true);
+$("q").oninput = renderList;
+// ---- sort: a styled pill dropdown (the native <select> menu cannot be themed)
+const SORT_LABELS = { attn: "Needs attention first", long: "Longest in the programme", drop: "Biggest decline", quiet: "Longest since a check-in", code: "Code A to Z" };
+let SORT = "attn", ddAct = 0; const ddKeys = Object.keys(SORT_LABELS), CHECK = `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8.5l3.2 3.2L13 4.8"/></svg>`;
+function ddRender() { $("ddv").textContent = SORT_LABELS[SORT]; $("ddm").innerHTML = ddKeys.map((k, i) => `<li role="option" id="dd-${k}" data-k="${k}" aria-selected="${k === SORT}" class="${i === ddAct ? "act" : ""}">${esc(SORT_LABELS[k])}${CHECK}</li>`).join(""); $("ddb").setAttribute("aria-activedescendant", "dd-" + ddKeys[ddAct]); }
+function ddOpen(o) { $("ddm").hidden = !o; $("ddb").setAttribute("aria-expanded", String(o)); if (o) { ddAct = ddKeys.indexOf(SORT); ddRender(); $("ddm").focus(); } }
+function ddPick(k) { SORT = k; ddOpen(false); ddRender(); renderList(); $("ddb").focus(); }
+$("ddb").onclick = () => ddOpen($("ddm").hidden);
+$("ddm").onclick = e => { const li = e.target.closest("[data-k]"); if (li) ddPick(li.dataset.k); };
+$("ddm").onkeydown = e => {
+  if (e.key === "ArrowDown" || e.key === "ArrowUp") { e.preventDefault(); ddAct = (ddAct + (e.key === "ArrowDown" ? 1 : ddKeys.length - 1)) % ddKeys.length; ddRender(); }
+  else if (e.key === "Enter" || e.key === " ") { e.preventDefault(); ddPick(ddKeys[ddAct]); }
+  else if (e.key === "Escape") { e.stopPropagation(); ddOpen(false); $("ddb").focus(); }
+  else if (e.key === "Tab") ddOpen(false);
+};
+document.addEventListener("click", e => { if (!$("ddm").hidden && !$("dd").contains(e.target)) ddOpen(false); });
+ddRender(); $("airef").onclick = () => loadAi(true);
 const openFrom = e => { const t = e.target.closest("[data-code]"); if (t) showAfter(t.dataset.code); };
 $("plist").onclick = openFrom; $("charts").onclick = openFrom;
 

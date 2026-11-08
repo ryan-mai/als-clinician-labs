@@ -10,6 +10,7 @@
 // A record is { patient, metric, value, t (ms epoch), source, session?, quality? }.
 const fs = require("fs"), path = require("path");
 const WEEK = 7 * 864e5, ORIGIN = Date.UTC(2000, 0, 3);          // same 7-day buckets as TimescaleDB time_bucket / date_bin with origin 2000-01-03
+const BULK = /^SYN-P\d/;   // the 2000-patient benchmark cohort made by seedCohort: it feeds the Data engine page, not the care-team roster
 const goodQuality = r => !(r.quality && r.quality.valid === false);
 
 function weeklyFromRecords(recs, patient, metrics) {
@@ -33,7 +34,7 @@ function createJsonStore(file) {
     async forPatient(patient) { return recs.filter(r => r.patient === patient); },
     async count() { return recs.length; },
     async hasPatient(patient) { return recs.some(r => r.patient === patient); },
-    async patients(limit = 60) { const m = new Map(); for (const r of recs) { const o = m.get(r.patient) || { patient: r.patient, n: 0, last: 0 }; o.n++; o.last = Math.max(o.last, r.t); m.set(r.patient, o); } return [...m.values()].sort((a, b) => b.last - a.last).slice(0, limit); },
+    async patients(limit = 100) { const m = new Map(); for (const r of recs) { if (BULK.test(r.patient)) continue; const o = m.get(r.patient) || { patient: r.patient, n: 0, last: 0 }; o.n++; o.last = Math.max(o.last, r.t); m.set(r.patient, o); } return [...m.values()].sort((a, b) => b.last - a.last).slice(0, limit); },
     async weekly(patient, metrics) { return weeklyFromRecords(recs, patient, metrics); },
     async engine() { return { backend: "json", rows: recs.length, patients: new Set(recs.map(r => r.patient)).size, note: "Readings are stored in a local JSON file. Set DATABASE_URL to a Tiger Cloud connection string to use Tiger Data." }; },
   };
@@ -94,7 +95,7 @@ function createPgStore(opts = {}) {
       return Number((await q("SELECT count(*) AS n FROM measurements")).rows[0].n);
     },
     async hasPatient(patient) { return (await q("SELECT 1 FROM measurements WHERE patient = $1 LIMIT 1", [patient])).rowCount > 0; },
-    async patients(limit = 60) { return (await q("SELECT patient, count(*)::int AS n, (extract(epoch from max(t)) * 1000)::bigint AS last FROM measurements GROUP BY patient ORDER BY max(t) DESC LIMIT $1", [limit])).rows.map(r => ({ patient: r.patient, n: r.n, last: Number(r.last) })); },
+    async patients(limit = 100) { return (await q("SELECT patient, count(*)::int AS n, (extract(epoch from max(t)) * 1000)::bigint AS last FROM measurements WHERE patient !~ '^SYN-P[0-9]' GROUP BY patient ORDER BY max(t) DESC LIMIT $1", [limit])).rows.map(r => ({ patient: r.patient, n: r.n, last: Number(r.last) })); },
     async weekly(patient, metrics) {
       if (!caps.cagg) { const rows = (await store.forPatient(patient)).filter(r => metrics.includes(r.metric)); return weeklyFromRecords(rows, patient, metrics); }
       const r = await q(`SELECT metric, (extract(epoch from week) * 1000)::bigint AS t, v_avg AS avg, n FROM weekly_metric WHERE patient = $1 AND metric = ANY($2::text[]) ORDER BY metric, week`, [patient, metrics]);
