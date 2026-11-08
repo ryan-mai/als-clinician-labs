@@ -1,89 +1,133 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#9fb09f">
+<meta name="theme-color" content="#f2f3f1">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <title>Phone Session - NeuroMotion</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500&family=Doto:wght@700&family=Space+Grotesk:wght@500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;700&family=Inter:wght@600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap">
 <link rel="stylesheet" href="theme.css">
 <style>
+  /* gamified patient app: bright, rounded, chunky buttons (matches the demo-video mockup) */
+  :root { --g:#43b05c; --g-d:#2f8744; --g-l:#d9f0dc; --lift:0 4px 0 #d3d8d2,0 8px 20px rgba(0,0,0,.06); --f-ui:'Inter',system-ui,sans-serif; }
   html, body { height:auto; min-height:100%; }
-  body { padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom); }
-  #app { max-width:480px; margin:0 auto; padding:16px; display:flex; flex-direction:column; gap:14px; }
-  h1 { font-size:26px; line-height:1.15; } h2 { font-size:18px; } p { margin:0; }
-  .card { padding:18px; }
+  body { padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom); background:#f2f3f1; color-scheme:light; }
+  #app { max-width:480px; margin:0 auto; padding:18px 20px 28px; display:flex; flex-direction:column; gap:16px; }
+  h1 { font:700 34px/1.1 var(--f-head); letter-spacing:-.02em; } h2 { font:700 20px/1.15 var(--f-head); } p { margin:0; }
+  .glass { background:#fff; backdrop-filter:none; -webkit-backdrop-filter:none; border:0; border-radius:28px; box-shadow:var(--lift); }
+  .card { padding:20px; }
   .small { font-size:13px; color:var(--mute); }
-  input[type=text] { font:inherit; font-size:17px; width:100%; padding:13px 16px; border-radius:16px; border:1px solid var(--line); background:rgba(255,255,255,.7); color:#16191a; }
-  .btn { font-size:17px; padding:15px 22px; width:100%; text-align:center; }
+  input[type=text] { font:inherit; font-size:17px; width:100%; padding:13px 16px; border-radius:18px; border:2px solid #e3e7e2; background:#fff; color:#16191a; }
+  input[type=text]:focus { outline:0; border-color:var(--g); }
+  .btn { font:800 19px var(--f-ui); letter-spacing:.02em; padding:18px 22px; width:100%; text-align:center; border-radius:99px; background:var(--g); color:#fff; box-shadow:0 6px 0 var(--g-d); border:0; transition:transform .08s, box-shadow .08s; }
+  .btn:active:not(:disabled) { transform:translateY(4px); box-shadow:0 2px 0 var(--g-d); }
+  .btn.ghost { background:#fff; color:var(--ink); border:2px solid #e3e7e2; box-shadow:0 4px 0 #d3d8d2; font-weight:700; font-size:16px; padding:14px 20px; }
+  .btn.ghost:active:not(:disabled) { box-shadow:0 1px 0 #d3d8d2; }
   .btn:disabled { opacity:.5; }
-  .steps { display:flex; flex-wrap:wrap; gap:6px; margin:12px 0 4px; }
-  .steps .pill { font-size:11px; }
-  /* run view */
-  .cam { position:relative; border-radius:26px; overflow:hidden; background:#101411; height:30vh; min-height:170px; max-height:320px; box-shadow:var(--shadow); }
+  /* home */
+  .hello { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; padding:6px 2px 0; }
+  .hello .sub { font:500 17px var(--f-body); color:var(--mute); margin-top:4px; }
+  .streak { display:flex; align-items:center; gap:6px; padding:8px 14px; border-radius:99px; background:#fff1d6; font:700 20px var(--f-head); color:#c46a00; flex:none; margin-top:4px; }
+  .goal .bar { height:16px; border-radius:99px; background:#dfe3de; overflow:hidden; } .goal .bar b { display:block; height:100%; width:0; background:linear-gradient(90deg,#58c26b,#8be08f); border-radius:99px; transition:width .6s cubic-bezier(.2,.8,.2,1); }
+  .lbl { font:500 12px var(--f-mono); letter-spacing:.08em; color:var(--mute); margin-top:8px; }
+  .rep { display:flex; align-items:center; gap:14px; padding:11px 16px; border-radius:28px; background:#fff; box-shadow:var(--lift); }
+  .rep .ic { flex:none; width:48px; height:48px; border-radius:50%; display:flex; align-items:center; justify-content:center; }
+  .rep .t { font:700 19px/1.1 var(--f-head); } .rep .d { font:500 14px var(--f-body); color:var(--mute); margin-top:2px; }
+  .rep .ck { margin-left:auto; flex:none; width:32px; height:32px; border-radius:50%; border:3px solid #cfd5cf; display:flex; align-items:center; justify-content:center; color:transparent; font:700 18px var(--f-body); transition:all .3s; }
+  .rep.done .ck { background:var(--g); border-color:var(--g); color:#fff; }
+  #v-intro { min-height:calc(100dvh - 46px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); gap:12px !important; }
+  #v-intro h1 { font-size:30px; } #v-intro .card { padding:12px 16px; } #v-intro .btn { margin-top:auto; }
+  #v-intro .msg:empty { display:none; } #v-intro .msg { min-height:0; margin-top:6px; }
+  .links { display:flex; justify-content:center; gap:18px; font:500 13px var(--f-mono); } .links button { all:unset; cursor:pointer; color:var(--mute); text-decoration:underline; padding:2px 0 6px; }
+  dialog.info { border:0; border-radius:28px; padding:22px; max-width:440px; width:calc(100% - 40px); box-shadow:0 20px 60px rgba(0,0,0,.3); font:15px/1.5 var(--f-body); color:var(--ink); } dialog.info::backdrop { background:rgba(10,14,11,.5); }
+  dialog.info h2 { margin-bottom:8px; } dialog.info .btn { margin-top:16px; }
+  .ochat { display:flex; flex-direction:column; gap:12px; } .ochat .bai { align-self:flex-start; max-width:88%; padding:18px 22px; border-radius:28px; border-bottom-left-radius:8px; background:#fff; box-shadow:0 3px 14px rgba(0,0,0,.07); font:500 20px/1.35 var(--f-body); }
+  .wf { display:flex; gap:5px; align-items:center; height:26px; margin-bottom:8px; } .wf i { display:block; width:6px; height:24px; border-radius:4px; background:var(--g); transform:scaleY(.3); transition:transform .15s; } .wf.on i { animation:wf .9s ease-in-out infinite; } .wf i:nth-child(2n) { animation-delay:.15s !important; } .wf i:nth-child(3n) { animation-delay:.3s !important; }
+  @keyframes wf { 0%,100% { transform:scaleY(.3); } 50% { transform:scaleY(1); } }
+  .heard { display:flex; flex-wrap:wrap; gap:8px; } .setup summary { cursor:pointer; font:700 15px var(--f-head); list-style:none; } .setup summary::-webkit-details-marker { display:none; } .setup summary::after { content:" +"; color:var(--mute); }
+  .setup[open] summary::after { content:" −"; } .setup .small { margin-top:10px; line-height:1.5; }
+  /* run */
+  .rhead { padding:4px 2px 0; } .rhead h1 { font-size:30px; }
+  .prs { display:flex; gap:8px; flex-wrap:wrap; } .prs span { padding:7px 13px; border-radius:99px; background:#e4e8e3; font:500 14px var(--f-mono); color:#6b746d; }
+  .prs span.on { background:var(--g-l); color:var(--g-d); } .prs span.cur { background:#16191a; color:#fff; }
+  .cam { position:relative; border-radius:32px; overflow:hidden; background:#101411; height:30vh; min-height:170px; max-height:320px; box-shadow:var(--lift); }
   #v-run.reading .cam { height:15vh; min-height:96px; }
-  .dock { position:sticky; bottom:0; z-index:5; display:flex; flex-direction:column; gap:8px; padding:10px 0 calc(8px + env(safe-area-inset-bottom)); background:linear-gradient(to top, var(--bg2) 75%, transparent); }
+  .dock { position:sticky; bottom:0; z-index:5; display:flex; flex-direction:column; gap:10px; padding:12px 0 calc(8px + env(safe-area-inset-bottom)); background:linear-gradient(to top, #f2f3f1 78%, transparent); }
   #fin { font-size:19px; padding:18px; }
   #dbgline { padding:6px 10px; font-size:11px; word-break:break-all; }
   .cam video, .cam canvas { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; transform:scaleX(-1); }
   .cam .shade { position:absolute; inset:0; background:radial-gradient(ellipse at 50% 45%, transparent 55%, rgba(8,12,9,.55)); pointer-events:none; }
   .chip { position:absolute; left:12px; right:12px; top:12px; margin:0 auto; width:max-content; max-width:calc(100% - 24px); padding:6px 14px; border-radius:99px; font:500 12px var(--f-mono); background:rgba(16,20,17,.62); color:#eef2ec; backdrop-filter:blur(8px); text-align:center; transition:background .2s; }
-  .chip.ok { background:rgba(79,138,91,.82); } .chip.warn { background:rgba(201,138,29,.88); } .chip.bad { background:rgba(194,69,58,.88); }
-  .big { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font:700 64px var(--f-dot); color:#fff; text-shadow:0 2px 16px rgba(0,0,0,.6); pointer-events:none; }
+  .chip.ok { background:rgba(67,176,92,.88); } .chip.warn { background:rgba(201,138,29,.9); } .chip.bad { background:rgba(194,69,58,.9); }
+  .big { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font:800 64px var(--f-ui); color:#fff; text-shadow:0 2px 16px rgba(0,0,0,.6); pointer-events:none; }
   .meter { position:absolute; left:16px; right:16px; bottom:14px; height:6px; border-radius:6px; background:rgba(255,255,255,.2); overflow:hidden; }
-  .meter i { display:block; height:100%; width:0; background:#bfe3b8; transition:width .08s; }
-  .sheet { display:flex; gap:14px; align-items:center; padding:16px; }
+  .meter i { display:block; height:100%; width:0; background:#8be08f; transition:width .08s; }
+  .sheet { display:flex; gap:14px; align-items:center; padding:16px 18px; }
   .ring { flex:0 0 64px; width:64px; height:64px; position:relative; }
-  .ring svg { width:64px; height:64px; transform:rotate(-90deg); } .ring circle { fill:none; stroke-width:6; }
-  .ring .bg { stroke:var(--line); } .ring .fg { stroke:var(--sage-d); stroke-linecap:round; stroke-dasharray:176; stroke-dashoffset:176; transition:stroke-dashoffset .15s linear; }
+  .ring svg { width:64px; height:64px; transform:rotate(-90deg); } .ring circle { fill:none; stroke-width:7; }
+  .ring .bg { stroke:#e4e8e3; } .ring .fg { stroke:var(--g); stroke-linecap:round; stroke-dasharray:176; stroke-dashoffset:176; transition:stroke-dashoffset .15s linear; }
   .ring b { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font:600 13px var(--f-mono); }
   .sheet h2 { margin-bottom:2px; } .sheet .small { font-size:14px; }
-  .dots { display:flex; gap:5px; justify-content:center; } .dots i { width:22px; height:5px; border-radius:4px; background:var(--line); } .dots i.on { background:var(--sage-d); } .dots i.cur { background:var(--ink); }
-  #passage { padding:14px 16px; font-size:18px; line-height:1.6; }
+  .dots { display:flex; gap:5px; justify-content:center; } .dots i { width:22px; height:6px; border-radius:4px; background:#dfe3de; } .dots i.on { background:var(--g); } .dots i.cur { background:#16191a; }
+  /* chat bubbles */
+  #passage { padding:18px 22px; font:500 20px/1.35 var(--f-body); border-radius:28px; border-bottom-left-radius:8px; max-width:88%; box-shadow:0 3px 14px rgba(0,0,0,.07); }
+  .bme { align-self:flex-end; max-width:82%; padding:16px 22px; border-radius:28px; border-bottom-right-radius:8px; background:#16191a; color:#eceeec; font:500 19px/1.3 var(--f-body); }
+  .live { padding:16px 22px; border-radius:26px; background:#e4f3e6; border:2px solid #b7dcbc; }
+  .live .k { font:500 13px var(--f-mono); color:#2f7a45; letter-spacing:.08em; } .live .v { font:700 34px var(--f-head); margin-top:2px; } .live .v small { font:500 17px var(--f-body); color:var(--mute); }
+  .topics ol { margin:8px 0 0 20px; padding:0; font-size:15px; } .topics li { margin:7px 0; }
+  /* XP pop */
+  .xp-pop { position:fixed; left:50%; bottom:34%; transform:translateX(-50%); z-index:50; padding:10px 22px; border-radius:99px; background:var(--g); color:#fff; font:800 26px var(--f-ui); box-shadow:0 5px 0 var(--g-d); pointer-events:none; animation:xpup 1.2s ease-out forwards; }
+  @keyframes xpup { 0% { opacity:0; transform:translate(-50%,20px) scale(.8); } 20% { opacity:1; transform:translate(-50%,0) scale(1.08); } 80% { opacity:1; } 100% { opacity:0; transform:translate(-50%,-70px) scale(1); } }
   /* results */
-  table { width:100%; border-collapse:collapse; font-size:15px; } td { padding:8px 2px; border-bottom:1px solid var(--line); } td:last-child { text-align:right; font-variant-numeric:tabular-nums; font-weight:500; }
+  .reward { text-align:center; padding:26px 20px; background:linear-gradient(160deg,#e4f3e6,#fff); }
+  .reward .xp { font:800 54px/1 var(--f-ui); color:#e59a00; margin:8px 0 2px; } .reward .tr { font:700 20px var(--f-head); }
+  table { width:100%; border-collapse:collapse; font-size:15px; } td { padding:9px 2px; border-bottom:1px solid var(--line); } td:last-child { text-align:right; font-variant-numeric:tabular-nums; font-weight:600; }
   .trend { display:grid; grid-template-columns:1fr auto; gap:2px 12px; padding:12px 0; border-bottom:1px solid var(--line); align-items:center; }
   .trend .n { font-weight:500; } .trend .v { text-align:right; font:500 15px var(--f-mono); } .trend svg { grid-column:1 / 3; width:100%; height:34px; }
-  .tag { font:500 11px var(--f-mono); padding:2px 8px; border-radius:99px; background:var(--sage-l); color:var(--sage-d); margin-left:6px; }
+  .tag { font:500 11px var(--f-mono); padding:2px 8px; border-radius:99px; background:var(--g-l); color:var(--g-d); margin-left:6px; }
   .tag.warn { background:rgba(201,138,29,.15); color:var(--warn); } .tag.est { background:transparent; border:1px solid var(--line); color:var(--mute); }
   .msg { font-size:14px; min-height:1.3em; } .msg.bad { color:var(--bad); } .msg.ok { color:var(--ok); }
   .row { display:flex; gap:10px; } .row > * { flex:1; }
-  .hero { font:700 22px/1.25 var(--f-dot); }
-  a.lnk { color:var(--sage-d); font-size:13px; }
-  /* first-time onboarding: selectable cards, same glass look as the rest */
-  .opt { display:grid; grid-template-columns:1fr auto; gap:2px 12px; align-items:center; text-align:left; width:100%; font:inherit; color:var(--ink); padding:14px 16px; border-radius:20px; border:1px solid var(--glass-line); background:var(--card); box-shadow:var(--shadow); cursor:pointer; }
-  .opt b { font-weight:500; font-size:16px; } .opt small { grid-column:1; color:var(--mute); font-size:13px; line-height:1.35; }
-  .opt i { grid-row:1 / span 2; grid-column:2; width:26px; height:26px; border-radius:50%; border:1.5px solid var(--line); display:flex; align-items:center; justify-content:center; font-style:normal; font-size:15px; color:transparent; }
-  .opt.on { background:var(--sage-l); border-color:var(--sage-d); } .opt.on i { background:var(--sage-d); border-color:var(--sage-d); color:#fff; }
-  .opt.info { cursor:default; grid-template-columns:1fr; } .opt:focus-visible, .btn:focus-visible { outline:2px solid var(--sage-d); outline-offset:2px; }
-  .topics ol { margin:8px 0 0 20px; padding:0; font-size:15px; } .topics li { margin:7px 0; }
+  a.lnk { color:var(--g-d); font-size:13px; }
+  /* first-time onboarding: selectable cards */
+  .opt { display:grid; grid-template-columns:1fr auto; gap:2px 12px; align-items:center; text-align:left; width:100%; font:inherit; color:var(--ink); padding:14px 18px; border-radius:24px; border:0; background:#fff; box-shadow:var(--lift); cursor:pointer; }
+  .opt b { font-weight:600; font-size:16px; } .opt small { grid-column:1; color:var(--mute); font-size:13px; line-height:1.35; }
+  .opt i { grid-row:1 / span 2; grid-column:2; width:28px; height:28px; border-radius:50%; border:3px solid #cfd5cf; display:flex; align-items:center; justify-content:center; font-style:normal; font-size:15px; color:transparent; }
+  .opt.on { background:var(--g-l); box-shadow:0 4px 0 #b7dcbc; } .opt.on i { background:var(--g); border-color:var(--g); color:#fff; }
+  .opt.info { cursor:default; grid-template-columns:1fr; } .opt:focus-visible, .btn:focus-visible { outline:3px solid var(--g); outline-offset:2px; }
 </style>
 </head>
 <body>
 <div id="app">
 
-  <!-- 1. intro: one tap starts everything -->
-  <section id="v-intro" style="display:flex;flex-direction:column;gap:14px">
-    <div style="padding:8px 4px 0"><div class="mono mute" style="font-size:12px;letter-spacing:.08em">NEUROMOTION</div><h1>Your 5-minute<br>check-in</h1></div>
+  <!-- 1. home: greeting, streak, daily goal, today's reps -->
+  <section id="v-intro" style="display:flex;flex-direction:column;gap:16px">
+    <div class="hello"><div><h1 id="hi">Hi there</h1><p class="sub">Ready for today's reps?</p></div><div class="streak" id="streak" title="Day streak"><svg width="20" height="24" viewBox="0 0 22 26"><path d="M11 1C12 8 19 10 19 17a8 8 0 0 1-16 0C3 13 6 11 7 8c1 2 2 3 3 3 1-3 0-6 1-10Z" fill="#ff9a1f"/></svg><span id="streakn">0</span></div></div>
+    <div class="goal"><div class="bar"><b id="goalbar"></b></div><div class="lbl" id="goallbl">DAILY GOAL · 0 OF 3</div></div>
+    <div class="rep" id="rp-voice"><div class="ic" style="background:#d9f0dc"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#2f8744" stroke-width="2.2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></div><div><div class="t">Chat + ee · ah · oo</div><div class="d">Voice · about 3 min</div></div><div class="ck">✓</div></div>
+    <div class="rep" id="rp-fist"><div class="ic" style="background:#ffe1dc"><svg width="28" height="28" viewBox="0 0 24 24" fill="#e0533f"><rect x="5" y="9" width="14" height="10" rx="4"/><rect x="6" y="5" width="3" height="6" rx="1.5"/><rect x="10" y="4" width="3" height="7" rx="1.5"/><rect x="14" y="5" width="3" height="6" rx="1.5"/></svg></div><div><div class="t">Make a fist</div><div class="d">Each hand · 10 sec</div></div><div class="ck">✓</div></div>
+    <div class="rep" id="rp-pinch"><div class="ic" style="background:#dcebff"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#2f6fd6" stroke-width="2.4" stroke-linecap="round"><path d="M7 17c0-5 2-9 6-11M17 17c0-4-1-7-4-9"/><circle cx="13" cy="6" r="1.6" fill="#2f6fd6"/></svg></div><div><div class="t">Key pinch</div><div class="d">Each hand · 10 sec</div></div><div class="ck">✓</div></div>
     <div class="glass card">
-      <p>Have a relaxed chat with a voice assistant about your day, say three vowel sounds, then squeeze and pinch each hand toward the camera. Your phone does the measuring while you go; there are almost no buttons to press between steps.</p>
-      <div class="steps" id="plan"></div>
-      <label class="small" for="code" style="display:block;margin:14px 0 6px">Your patient code (from your clinic)</label>
-      <input type="text" id="code" placeholder="e.g. ALEX-CASE" autocomplete="off" autocapitalize="characters">
-      <p class="small" style="margin-top:12px">During the chat your voice is sent to a speech service (ElevenLabs) so the assistant can talk with you. Camera video stays on this phone.</p>
-      <div style="height:14px"></div>
-      <button class="btn" id="begin">Begin</button>
-      <p class="msg" id="imsg" style="margin-top:8px"></p>
+      <label class="small" for="code" style="display:block;margin:0 0 6px">Your care code (from your clinic)</label>
+      <input type="text" id="code" placeholder="e.g. ALEX-CASE" autocomplete="off" autocapitalize="characters" style="padding:10px 14px">
+      <p class="msg" id="imsg"></p>
     </div>
-    <div class="glass card small"><b style="color:var(--ink)">How to set up.</b> Lean the phone upright against a mug or a stack of books, front camera facing you, about an arm's length away (30 to 40 cm) at face height. That leaves both hands free and keeps the picture steady. <b style="color:var(--ink)">For speech:</b> your face in the top half of the picture, in a quiet room. Earphones help during the chat, so the assistant's voice is not picked up by your microphone. <b style="color:var(--ink)">For the hand steps:</b> rest your elbow on the table and hold the hand 30 to 40 cm from the phone, palm toward the screen, fingers up, whole hand in view; for the pinch, turn the hand side-on. If you have no stand, hold the phone steady with your <i>other</i> hand, never the one being tested.</div>
-    <div class="glass card small"><b style="color:var(--ink)">What this is.</b> A movement and voice check that tracks <i>your own</i> trend between visits. It is not a diagnosis and it does not measure force. Camera video, and the sound for the vowel and hand steps, are analysed on this phone and never uploaded. For the chat, your voice goes to the speech service so the assistant can hear and answer you; this app does not save the recording or what was said. Only a handful of summary numbers are shared with your care team, and only when you tap Share.</div>
+    <button class="btn" id="begin">START REPS</button>
+    <div class="links"><button type="button" data-d="d-setup">How to set up</button><button type="button" data-d="d-what">What this is</button></div>
   </section>
+
+  <dialog class="info" id="d-setup"><h2>How to set up</h2>
+    <p class="small" style="font-size:14px">Lean the phone upright against a mug or a stack of books, front camera facing you, about an arm's length away (30 to 40 cm) at face height. That leaves both hands free and keeps the picture steady. <b style="color:var(--ink)">For speech:</b> your face in the top half of the picture, in a quiet room. Earphones help during the chat, so the assistant's voice is not picked up by your microphone. <b style="color:var(--ink)">For the hand steps:</b> rest your elbow on the table and hold the hand 30 to 40 cm from the phone, palm toward the screen, fingers up, whole hand in view; for the pinch, turn the hand side-on. If you have no stand, hold the phone steady with your <i>other</i> hand, never the one being tested.</p>
+    <button class="btn" data-close>Got it</button></dialog>
+  <dialog class="info" id="d-what"><h2>What this is</h2>
+    <p class="small" style="font-size:14px">A movement and voice check that tracks <i>your own</i> trend between visits. It is not a diagnosis and it does not measure force. Camera video, and the sound for the vowel and hand steps, are analysed on this phone and never uploaded. For chats, your voice goes to the speech service (ElevenLabs) so the assistant can hear and answer you; this app does not save the recording or what was said. Only a handful of summary numbers are shared with your care team, and only when you tap Share.</p>
+    <button class="btn" data-close>Got it</button></dialog>
 
   <!-- 1b. first-time onboarding (only when this patient code is not in the database yet) -->
   <section id="v-onb" hidden style="display:none;flex-direction:column;gap:14px">
-    <div style="padding:8px 4px 0"><div class="mono mute" style="font-size:12px;letter-spacing:.08em" id="onb-k"></div><h1 id="onb-h" style="margin-top:2px"></h1><p class="small" id="onb-p" style="margin-top:8px;font-size:15px"></p></div>
+    <div style="padding:8px 4px 0"><div class="lbl" id="onb-k" style="margin:0"></div><h1 id="onb-h" style="margin-top:2px"></h1><p class="small" id="onb-p" style="margin-top:8px;font-size:15px"></p></div>
     <div id="onb-body" style="display:flex;flex-direction:column;gap:10px"></div>
     <div class="dots" id="onb-dots" aria-hidden="true"></div>
     <div class="row"><button class="btn ghost" id="onb-back" type="button">Back</button><button class="btn" id="onb-next" type="button">Continue</button></div>
@@ -92,8 +136,12 @@
 
   <!-- 2. run: camera in the background, prompts on a sheet -->
   <section id="v-run" hidden style="display:none;flex-direction:column;gap:12px">
+    <div class="rhead"><h1 id="rtitle">Reps</h1><div class="lbl" id="rsub" style="margin-top:4px"></div></div>
+    <div class="prs" id="prs"></div>
     <div class="cam"><video id="vid" playsinline muted></video><canvas id="ovl"></canvas><div class="shade"></div><div class="chip" id="chip">Getting ready...</div><div class="big" id="big"></div><div class="meter" aria-hidden="true"><i id="lvl"></i></div></div>
     <div class="glass card" id="passage" hidden></div>
+    <div class="bme" id="mebub" hidden></div>
+    <div class="live" id="live" hidden><div class="k">SPEAKING RATE · LIVE</div><div class="v"><span id="livev">--</span> <small>words / min</small></div></div>
     <div class="glass card topics" id="topics" hidden><h2>We will chat about</h2><ol id="topics-l"></ol></div>
     <div class="dock">
       <div class="glass sheet"><div class="ring"><svg viewBox="0 0 64 64"><circle class="bg" cx="32" cy="32" r="28"/><circle class="fg" id="ring" cx="32" cy="32" r="28"/></svg><b id="ringt"></b></div><div style="min-width:0"><h2 id="sname"></h2><p class="small" id="shelp"></p></div></div>
@@ -106,13 +154,13 @@
 
   <!-- 3. results -->
   <section id="v-res" hidden style="display:none;flex-direction:column;gap:14px">
-    <div style="padding:8px 4px 0"><div class="mono mute" style="font-size:12px;letter-spacing:.08em" id="rdate"></div><h1 id="rhead">Done</h1></div>
+    <div class="glass reward"><div class="lbl" id="rdate" style="margin:0"></div><h1 id="rhead" style="margin-top:6px">Done</h1><div class="xp" id="rxp">+0 XP</div><div class="tr" id="rstreak"></div></div>
     <div class="glass card"><h2>This check-in</h2><table id="rtbl" style="margin-top:6px"></table><p class="small" id="rnote" style="margin-top:10px"></p>
-      <div style="height:12px"></div><button class="btn" id="share">Share with my care team</button><p class="msg" id="smsg" style="margin-top:8px"></p></div>
+      <div style="height:12px"></div><button class="btn" id="share">SHARE WITH MY CARE TEAM</button><p class="msg" id="smsg" style="margin-top:8px"></p></div>
     <div class="glass card" id="prog" hidden><h2>Your progress</h2><p class="small" id="pnote" style="margin:4px 0 6px"></p><div id="ptrends"></div></div>
-    <div class="glass card" id="walk"><h2>Optional: a one-minute walk</h2><p class="small" style="margin:4px 0 10px">Put the phone in a pocket or at your waist and walk steadily for a minute. Uses the motion sensor only.</p><button class="btn ghost" id="walkgo">Start walking</button><p class="msg" id="wmsg" style="margin-top:8px"></p></div>
+    <div class="glass card" id="walk"><h2>Bonus round: a one-minute walk</h2><p class="small" style="margin:4px 0 10px">Put the phone in a pocket or at your waist and walk steadily for a minute. Uses the motion sensor only.</p><button class="btn ghost" id="walkgo">Start walking (+20 XP)</button><p class="msg" id="wmsg" style="margin-top:8px"></p></div>
     <div class="glass card"><h2>Saved for your appointment</h2><p class="small" style="margin-top:4px">These can only be measured in clinic: blood tests (neurofilament light chain, creatine kinase), the genetic panel, any spinal tap or muscle biopsy, and true dynamometer grip and pinch force. Your phone numbers give your care team a baseline and a trend in the meantime.</p></div>
-    <button class="btn ghost" id="again">Do another check-in</button>
+    <button class="btn ghost" id="again">Back to home</button>
   </section>
 </div>
 
@@ -149,7 +197,6 @@ const STEPS = [
   { id: "grip_l", kind: "hand", sig: "grip", side: "l", name: "Left hand: fist", help: "Switch to your left hand: elbow on the table, palm toward the screen, fingers up, whole hand in view. Open wide, then close into a fist, again and again.", short: "Fist L" },
   { id: "pinch_l", kind: "hand", sig: "pinch", side: "l", name: "Left hand: pinch", help: "Left hand up, turned side-on. Open thumb and first finger wide, then pinch together firmly, again and again.", short: "Pinch L" },
 ];
-$("plan").innerHTML = STEPS.map(s => `<span class="pill">${esc(s.short)}</span>`).join("");
 
 /* ------------------------------------------------------------------ sensors: one camera + mic stream, tracked in the background */
 const S = { stream: null, models: {}, tap: null, mode: null, live: { hand: null, face: null }, rec: null, running: false, lastTs: -1, floor: 0.01, abort: false };
@@ -215,7 +262,37 @@ function line(a, b) { octx.strokeStyle = "#bfe3b8"; octx.lineWidth = 3; octx.beg
 const chip = (t, cls = "") => { $("chip").textContent = t; $("chip").className = "chip " + cls; };
 const ring = (frac, label = "") => { $("ring").style.strokeDashoffset = String(176 * (1 - Math.max(0, Math.min(1, frac)))); $("ringt").textContent = label; };
 const big = t => { $("big").textContent = t; };
-function dotsUi(cur, done) { $("dots").innerHTML = STEPS.map((s, i) => `<i class="${done.includes(s.id) ? "on" : ""} ${i === cur ? "cur" : ""}"></i>`).join(""); }
+function dotsUi(cur, done) {
+  $("dots").innerHTML = STEPS.map((s, i) => `<i class="${done.includes(s.id) ? "on" : ""} ${i === cur ? "cur" : ""}"></i>`).join("");
+  const st = STEPS[cur], talk = st && st.kind === "talk", g = groups(done);
+  $("prs").innerHTML = ["voice", "fist", "pinch"].map(k => `<span class="${g[k] ? "on" : GROUP_OF(st) === k ? "cur" : ""}">${{ voice: "Voice", fist: "Fist", pinch: "Pinch" }[k]}${g[k] ? " ✓" : ""}</span>`).join("");
+  $("rtitle").textContent = talk ? "Check-in chat" : st ? st.name : "Getting ready"; $("rsub").textContent = talk ? "VOICE BY ELEVENLABS" : "ON-DEVICE · VIDEO STAYS ON THIS PHONE";
+  $("live").hidden = !talk; if (!talk) $("mebub").hidden = true;
+}
+/* gamification: three daily reps (voice, fist, pinch), XP per finished step */
+const XP = { talk: 15, vowel: 5, hand: 10, read: 15 }, GROUP_OF = st => !st ? null : st.kind === "hand" ? (st.sig === "grip" ? "fist" : "pinch") : "voice";
+const groups = done => ({ voice: STEPS.filter(s => GROUP_OF(s) === "voice").every(s => done.includes(s.id)), fist: STEPS.filter(s => GROUP_OF(s) === "fist").every(s => done.includes(s.id)), pinch: STEPS.filter(s => GROUP_OF(s) === "pinch").every(s => done.includes(s.id)) });
+function award(st) {
+  RUN.done.push(st.id); RUN.xp = (RUN.xp || 0) + (XP[st.kind] || 5);
+  const p = document.createElement("div"); p.className = "xp-pop"; p.textContent = "+" + (XP[st.kind] || 5) + " XP"; document.body.appendChild(p); setTimeout(() => p.remove(), 1300);
+}
+const HOME = { today: false, streak: 0, sessions: 0 };
+function paintHome() {
+  const g = HOME.today ? { voice: true, fist: true, pinch: true } : groups(RUN.done), n = Object.values(g).filter(Boolean).length;
+  for (const [k, id] of [["voice", "rp-voice"], ["fist", "rp-fist"], ["pinch", "rp-pinch"]]) $(id).classList.toggle("done", !!g[k]);
+  $("goalbar").style.width = Math.round(n / 3 * 100) + "%"; $("goallbl").textContent = "DAILY GOAL · " + n + " OF 3"; $("streakn").textContent = HOME.streak;
+  const c = ($("code").value.trim().split(/[^A-Za-z]/)[0] || ""), nm = c && /-/.test($("code").value) && !/^(PT|CASE|TEST|DEMO)$/i.test(c) ? c[0].toUpperCase() + c.slice(1).toLowerCase() : ""; $("hi").textContent = nm ? "Hi " + nm : "Hi there";
+}
+async function refreshHome() {
+  const code = $("code").value.trim(); HOME.today = false; HOME.streak = 0;
+  if (/^[A-Za-z0-9_-]{2,32}$/.test(code) && !DEMO) {
+    try {
+      const r = await fetch("/api/measurements?patient=" + encodeURIComponent(code)); const recs = r.ok ? await r.json() : [];
+      if (Array.isArray(recs) && recs.length) { const act = Measures.summary(recs, code).activity; HOME.streak = act.streak || 0; HOME.sessions = act.sessions || 0; const d = new Date().toDateString(); HOME.today = recs.some(x => x.source === "companion" && new Date(x.t).toDateString() === d); }
+    } catch (e) {}
+  }
+  paintHome();
+}
 const waitFor = async (fn, ms) => { const t0 = performance.now(); while (!S.abort) { if (fn()) return true; if (performance.now() - t0 > ms) return false; await sleep(40); } throw new Error("aborted"); };
 
 /* ------------------------------------------------------------------ synthetic data for ?demo=1 (the real analysers still run on it) */
@@ -242,7 +319,7 @@ const SIM = {
 
 /* ------------------------------------------------------------------ steps */
 const PASSAGE = { text: DDK.PASSAGE, words: DDK.PASSAGE_WORDS, source: "default" };   // only used if the chat assistant is not available (then the standard passage is read, as before)
-const RUN = { values: {}, vowels: {}, widths: {}, readFrames: null, rows: [], done: [] };
+const RUN = { values: {}, vowels: {}, widths: {}, readFrames: null, rows: [], done: [], xp: 0 };
 const retryNote = r => (r && r.reasons && r.reasons[0]) || "That one did not work";
 
 async function speechStep(st, idx) {
@@ -288,7 +365,7 @@ async function speechStep(st, idx) {
       if (!m.valid) { chip(retryNote(m) + ". Let us try that again.", "warn"); await sleep(2200); continue; }
       RUN.vowels[st.v] = m; const w = frames.filter(f => f.open != null).map(f => f.width).sort((x, y) => x - y); RUN.widths[st.v] = w.length >= 10 ? w[w.length >> 1] : null;
     }
-    RUN.done.push(st.id); chip("Got it", "ok"); ring(1, "ok"); await sleep(500); return true;
+    award(st); chip("Got it", "ok"); ring(1, "ok"); await sleep(500); return true;
   }
   chip("Skipping this one for now", "warn"); await sleep(1200); return false;
 }
@@ -305,6 +382,7 @@ async function ensureMic() {                       // the chat can leave the pho
     S.tap.stop(); if (S.extra) S.extra.getTracks().forEach(t => t.stop()); S.extra = a; S.tap = new Tap(a); await S.tap.ready();
   } catch (e) { console.warn("could not reopen the microphone", e); }
 }
+const liveRate = tr => { const sp = tr.speechS(); if (sp >= 3 && tr.words() >= 5) $("livev").textContent = Math.round(tr.words() / (sp / 60)); };
 async function talkStep(st, idx) {
   S.mode = "face"; S.live.face = null; S.rec = null; S.finish = false; $("v-run").classList.add("reading"); $("passage").hidden = true;
   $("sname").textContent = st.name; $("shelp").textContent = st.help; ring(0); big(""); dotsUi(idx, RUN.done);
@@ -317,7 +395,7 @@ async function talkStep(st, idx) {
     for (const [i, words] of [30, 26, 34, 28].entries()) {
       say(Convo.DEFAULT_QUESTIONS[i]); tr.mode("speaking", t); t += 2500; tr.mode("listening", t); t += 700;
       const secs = words / (wpm / 60); for (let x = 0; x < secs * 1000; x += 50) tr.sample(true, t + x); t += secs * 1000; tr.text("word ".repeat(words)); t += 500;
-      ring(tr.words() / GOAL_WORDS, ""); await sleep(450);
+      ring(tr.words() / GOAL_WORDS, ""); liveRate(tr); await sleep(450);
     }
     frames = SIM.face();
   } else {
@@ -330,7 +408,7 @@ async function talkStep(st, idx) {
       conv = await Conversation.startSession({
         signedUrl: sess.signedUrl, dynamicVariables: sess.dynamicVariables || {},
         clientTools: { finish_conversation: async () => { if (!finishAt) finishAt = performance.now(); return "ok"; } },   // the agent says goodbye first, then calls this
-        onMessage: m => { if (!m || !m.message) return; if (m.source === "user") tr.text(m.message); else say(m.message); },
+        onMessage: m => { if (!m || !m.message) return; if (m.source === "user") { tr.text(m.message); $("mebub").textContent = m.message; $("mebub").hidden = false; } else say(m.message); },
         onModeChange: m => { if (m && m.mode) { mode = m.mode; tr.mode(m.mode, performance.now()); } },
         onVadScore: v => { const sc = (v && (v.vadScore ?? v)) || 0; if (sc > 0.5) vadAt = performance.now(); },
         onDisconnect: () => { ended = true; },
@@ -342,7 +420,7 @@ async function talkStep(st, idx) {
       while (true) {
         await sleep(50); const now = performance.now(), el = (now - t0) / 1000;
         tr.sample(voiced() || now - vadAt < 300, now);                                   // sound on the phone's mic, or ElevenLabs' own voice detector
-        ring(Math.min(1, tr.words() / GOAL_WORDS), Math.round(el) + "s"); chip(mode === "speaking" ? "The assistant is talking" : "Your turn. Take your time", "ok");
+        ring(Math.min(1, tr.words() / GOAL_WORDS), Math.round(el) + "s"); liveRate(tr); chip(mode === "speaking" ? "The assistant is talking" : "Your turn. Take your time", "ok");
         if (S.abort) throw new Error("aborted");
         if (S.finish && !drainUntil) drainUntil = now + 2000;                           // let the last transcript arrive before closing
         if (drainUntil && now > drainUntil) break; if (ended || el > MAX_S) break;
@@ -357,7 +435,7 @@ async function talkStep(st, idx) {
   RUN.readFrames = DEMO ? frames : Convo.framesIn(frames, m.chunks, t0);
   if (m.valid) { Object.assign(RUN.values, Convo.toValues(m)); RUN.rows.push(["Speaking rate (from the chat)", Math.round(m.wpm) + " words/min"]); }
   else { RUN.rows.push(["Speaking rate", "not enough speech this time"]); chip(m.reasons[0] + ". Moving on.", "warn"); await sleep(2600); }
-  await ensureMic(); RUN.done.push(st.id); chip("Got it", "ok"); ring(1, "ok"); await sleep(500); return true;
+  await ensureMic(); award(st); chip("Got it", "ok"); ring(1, "ok"); await sleep(500); return true;
 }
 
 async function handStep(st, idx) {
@@ -380,7 +458,7 @@ async function handStep(st, idx) {
     if (st.sig === "grip") Object.assign(RUN.values, Grip.toLabs(m, "grip", st.side));
     Object.assign(RUN.values, KgEst.toValues(m, st.sig, st.side));
     RUN.rows.push([(st.sig === "grip" ? "Fist, " : "Pinch, ") + (st.side === "r" ? "right" : "left"), m.rate.toFixed(1) + " per second" + (st.sig === "grip" && m.decrement != null ? ", " + (m.decrement < -10 ? "tiring " + Math.round(-m.decrement) + "%" : "steady") : "")]);
-    RUN.done.push(st.id); chip("Got it", "ok"); ring(1, "ok"); await sleep(500); return true;
+    award(st); chip("Got it", "ok"); ring(1, "ok"); await sleep(500); return true;
   }
   chip("Skipping this one for now", "warn"); await sleep(1200); return false;
 }
@@ -395,7 +473,7 @@ function finishSpeechDerived() {
 }
 
 /* ------------------------------------------------------------------ session lifecycle */
-const show = id => { for (const v of ["v-intro", "v-onb", "v-run", "v-res"]) { $(v).hidden = v !== id; $(v).style.display = v === id ? "flex" : "none"; } window.scrollTo(0, 0); };
+const show = id => { for (const v of ["v-intro", "v-onb", "v-run", "v-res"]) { $(v).hidden = v !== id; $(v).style.display = v === id ? "flex" : "none"; } window.scrollTo(0, 0); if (id === "v-intro") { paintHome(); refreshHome(); } };
 function teardown() { S.running = false; S.abort = true; if (S.stream) S.stream.getTracks().forEach(t => t.stop()); S.stream = null; if (S.extra) S.extra.getTracks().forEach(t => t.stop()); S.extra = null; if (S.tap) S.tap.stop(); S.tap = null; S.rec = null; S.mode = null; }
 $("quit").onclick = () => { teardown(); show("v-intro"); };
 
@@ -456,20 +534,126 @@ function runOnboarding(code) {                     // resolves true when finishe
     draw();
   });
 }
+
+/* ------------------------------------------------------------------ first-time check-in as a VOICE CHAT: the assistant asks what has changed, we listen for symptoms in what the patient says
+   (keyword rules in this browser, so the words go nowhere but the speech service), then the patient confirms or corrects a short list before anything is sent.
+   If the voice chat cannot start, the old tick-box questionnaire (runOnboarding) is used instead. */
+const VX = (() => {
+  const NEG = /\b(no|not|never|without|none|haven'?t|hasn'?t|don'?t|doesn'?t|didn'?t|isn'?t|wasn'?t|nothing)\b[^.!?]{0,28}$/i;
+  const R = {
+    fasc: /twitch|fasciculat|flicker|ripple/, cramp: /cramp/,
+    arm_weak: /\b(arms?|hands?|grip|fingers?|wrists?)\b[^.!?]{0,40}\b(weak|weaker|clumsy|drop|dropping|dropped)|dropp?(ing|ed)? (things|objects|my)|button|jar lid|opening jars/,
+    wasting: /wast(ing|ed)|thinner|shrunk|shrinking|lost (some )?muscle/,
+    leg_weak: /\b(legs?|foot|feet|ankles?|knees?)\b[^.!?]{0,40}\b(weak|weaker|heavy|drag|dragging|drop)|foot ?drop|trip(ping|ped)?\b|stumbl|\bfall(ing|en)?\b|\bfell\b/,
+    neck_weak: /\bneck\b|hold (up )?my head/, spastic: /stiff|tight muscle|spastic|rigid/,
+    speech: /slur|nasal|mumbl|\bspeech\b|(talk|speak)(ing)?\b[^.!?]{0,30}\b(hard|harder|difficult|slow|slower)/,
+    swallow: /swallow|chok|\bchew/, tongue: /tongue|drool|saliva/,
+    dyspnea: /short(ness)? of breath|breathless|out of breath|trouble breathing|hard to breathe|breath(e|ing)\b[^.!?]{0,30}(lying|flat)|lying (flat|down)[^.!?]{0,30}breath/,
+    hypovent: /morning headache|headaches?\b|(sleep|sleeping) (poorly|badly)|poor sleep|sleepy|tired (during|in) the day|daytime/,
+    pba: /laugh|cry(ing)? for no|uncontrollabl|cry(ing)? (suddenly|out of nowhere)/, wtloss: /weight loss|lost weight|losing weight/,
+    cog: /personality|behaviou?r|finding (the )?words|language (has )?changed/,
+    progressive: /worse|worsen|progress|declin|getting weaker|steadily|going downhill|over (the )?(last |past )?(few |several )?(weeks|months)/,
+    asymmetric: /\b(one|only one) (side|arm|hand|leg|foot)|\bonly (my )?(right|left)|started (in|on) (my )?(right|left)|\b(right|left) (hand|arm|leg|foot|side)\b[^.!?]{0,20}\b(first|started|is weaker|was weaker)/,
+    spread: /spread|moved (on )?to|now (also|my)|both (hands|arms|legs)|other (arm|hand|leg|side)|and now\b/,
+    sensory: /numb|tingl|pins and needles|loss of (feeling|sensation)/, sphincter: /bladder|bowel|incontinen/,
+    fluctuating: /eyelid|droop|double vision|worse (at|toward|towards|in) (the )?(end of the day|evening)/,
+    family: /family history|runs in (the|my) family|\b(mother|father|dad|mum|mom|brother|sister|uncle|aunt|grand\w+)\b[^.!?]{0,40}\b(als|motor neuron|lou gehrig|dementia)/,
+    military: /military|\barmy\b|\bnavy\b|served in|veteran|soldier/, head: /concussion|head injury|hit my head|hockey|football|boxing/,
+    smoking: /smok/, exposure: /pesticide|solvent|\blead\b|chemical|\bfarm/,
+    sudden: /sudden|overnight|all of a sudden|out of nowhere|within (a few )?(minutes|hours)|like a stroke|woke up (with|and)/,
+  };
+  const hit = (t, re) => { const g = new RegExp(re.source, "gi"); let m; while ((m = g.exec(t))) { if (!NEG.test(t.slice(Math.max(0, m.index - 36), m.index))) return true; if (m.index === g.lastIndex) g.lastIndex++; } return false; };
+  const WORDS = { a: 1, one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10, eleven: 11, twelve: 12, couple: 2, few: 3 };
+  function months(t) { const m = /(\d+(?:\.\d+)?|a couple|a few|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|a)(?: of)? (months?|years?|weeks?) ago/i.exec(t) || /for (?:about |around |the last |the past )?(\d+(?:\.\d+)?|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|a couple of|a few) (months?|years?|weeks?)/i.exec(t); if (!m) return null; const w = m[1].toLowerCase().replace(/^a (couple|few)$/, "$1").replace(/ of$/, ""), n = isFinite(+w) ? +w : WORDS[w]; if (!n) return null; const u = m[2].toLowerCase(); return Math.round((u.startsWith("year") ? n * 12 : u.startsWith("week") ? n / 4.3 : n) * 10) / 10; }
+  const extract = text => { const t = String(text || "").toLowerCase().replace(/[’]/g, "'"), keys = Object.keys(R).filter(k => k !== "reflex" && hit(t, R[k])); return { keys, months: months(t) }; };
+  return { extract };
+})();
+const ONB_ALL = (() => { const m = new Map(); for (const s of [...Triage.SYMPTOMS.filter(x => x.key !== "reflex"), ...Triage.PATTERN, ...Triage.RED_FLAGS, ...Triage.RISKS]) m.set(s.key, s.label || s.q); return m; })();
+const ONB_GROUPS = [["Muscles and movement", ["fasc", "cramp", "arm_weak", "wasting", "leg_weak", "neck_weak", "spastic"]], ["Speech, swallowing, breathing", ["speech", "swallow", "tongue", "dyspnea", "hypovent"]], ["How it has gone", ["progressive", "asymmetric", "spread"]], ["Anything else", ["pba", "wtloss", "cog", "sensory", "sphincter", "fluctuating"]], ["Background", ["family", "military", "head", "smoking", "exposure"]]];
+const DEMO_TALK = ["Hi, yes, I'm doing okay.", "Mostly my right hand. I keep dropping things and buttons are hard, and I get some twitching in my arm.", "My legs are fine, but my speech feels a little slurred when I'm tired.", "It started in my right hand about 6 months ago and it has been getting worse, and now my left hand too."];
+const ONB_SDK = "https://cdn.jsdelivr.net/npm/@elevenlabs/client@1.31.0/+esm";
+
+function runVoiceOnboarding(code) {                // resolves true when saved, false if the patient goes Back, or hands over to the tick-box questionnaire if the chat cannot start
+  return new Promise(resolve => {
+    show("v-onb"); const msg = $("onb-msg"), sel = { ans: new Set(), consent: false, months: "" }; let conv = null, said = [], stage = "intro", ended = false;
+    const kk = t => ($("onb-k").textContent = t), hh = t => ($("onb-h").textContent = t), pp = t => ($("onb-p").textContent = t), nx = (t, dis) => { $("onb-next").hidden = false; $("onb-next").textContent = t; $("onb-next").disabled = !!dis; }, bk = hide => { $("onb-back").hidden = !!hide; };
+    const card = (t, s, on, attr) => `<button type="button" ${attr} class="opt${on ? " on" : ""}" aria-pressed="${!!on}"><b>${esc(t)}</b>${s ? `<small>${esc(s)}</small>` : ""}<i aria-hidden="true">✓</i></button>`;
+    const post = async body => { const r = await fetch("/api/patient/onboard", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ patient: code, ...body }) }); let j = null; try { j = await r.json(); } catch (e) {} if (!r.ok) throw new Error((j && j.error) || "request failed (" + r.status + ")"); return j; };
+    const fallBack = async why => { try { if (conv) await conv.endSession(); } catch (e) {} conv = null; resolve(await runOnboarding(code)); };
+    function intro() {
+      stage = "intro"; msg.textContent = ""; kk("QUICK INTRO CHAT"); hh("Let's have a quick chat"); pp("A friendly voice assistant will ask how you have been and what has changed. Just talk, there are no right answers. You will check a short list at the end before anything is sent."); bk(false); window.scrollTo(0, 0);
+      $("onb-dots").innerHTML = "";
+      $("onb-body").innerHTML = `<div class="opt info"><b>It takes about three minutes</b><small>Talk about your hands, legs, speech, swallowing, breathing, and how things have gone.</small></div>` +
+        `<div class="glass card"><p class="small" style="font-size:14px;color:var(--ink)">Your voice is sent to a speech service (ElevenLabs) so the assistant can hear and answer you. This app does not save the recording or what was said, and nothing leaves your phone for your care team until you confirm the list at the end.</p></div>` + card("I understand, and I am happy to go ahead", "Your voice is used for this chat only", sel.consent, 'data-consent="1"');
+      nx("START CHAT", !sel.consent); $("onb-body").querySelector("[data-consent]").onclick = () => { sel.consent = !sel.consent; intro(); };
+    }
+    async function startChat() {
+      stage = "chat"; nx("Connecting...", true); bk(true); kk("VOICE BY ELEVENLABS"); hh("Intro chat"); pp(""); $("onb-dots").innerHTML = "";
+      $("onb-body").innerHTML = `<div class="ochat"><div class="bai" id="oai"><div class="wf" id="owf"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><span id="oait">Connecting to the assistant...</span></div><div class="bme" id="ome" hidden></div><div class="live" id="ostat"><div class="k">STATUS</div><div class="v" style="font-size:20px" id="ostt">Getting ready</div></div></div>`;
+      const setAi = t => { $("oait").textContent = t; }, setSt = t => { $("ostt").textContent = t; };
+      if (DEMO) {
+        nx("I am done chatting", false); $("owf").classList.add("on"); setAi("Hi, thanks for checking in. How have things been, and has anything changed lately?");
+        for (const [i, line] of DEMO_TALK.entries()) { await sleep(900); if (stage !== "chat") return; said.push(line); $("ome").hidden = false; $("ome").textContent = line; setSt("Your turn. Take your time"); await sleep(700); setAi(["Thanks. Tell me more about your hands and arms.", "And what about your legs, walking, or your speech?", "How did it begin, and how has it changed over time?", "Thank you, that is really helpful. I'll put a short list together for you to check."][i]); }
+        await sleep(700); return review();
+      }
+      let sess = null; try { const r = await fetch("/api/eleven-session?agent=chat&mode=onboard&patient=" + encodeURIComponent(code)); sess = r.ok ? await r.json() : null; } catch (e) {}
+      if (!sess || !sess.signedUrl) return fallBack("The voice chat is not available.");
+      let Conversation; try { ({ Conversation } = await import(ONB_SDK)); } catch (e) { return fallBack("Could not load the chat."); }
+      let finishAt = 0;
+      try {
+        conv = await Conversation.startSession({
+          signedUrl: sess.signedUrl, dynamicVariables: sess.dynamicVariables || {},
+          clientTools: { finish_conversation: async () => { if (!finishAt) finishAt = performance.now(); return "ok"; } },
+          onMessage: m => { if (!m || !m.message) return; if (m.source === "user") { said.push(m.message); $("ome").hidden = false; $("ome").textContent = m.message; } else setAi(m.message); },
+          onModeChange: m => { if (m && m.mode) { $("owf").classList.toggle("on", m.mode === "speaking"); setSt(m.mode === "speaking" ? "The assistant is talking" : "Your turn. Take your time"); } },
+          onDisconnect: () => { ended = true; }, onError: m => console.error("[elevenlabs onboarding]", m),
+        });
+      } catch (e) { console.error(e); return fallBack("Could not start the chat."); }
+      nx("I am done chatting", false);
+      const t0 = performance.now(); while (stage === "chat" && !ended && performance.now() - t0 < 600000) { await sleep(300); if (finishAt && performance.now() - finishAt > 2500) break; }
+      if (stage === "chat") done();
+    }
+    async function done() { if (stage !== "chat") return; stage = "closing"; nx("Working it out...", true); await sleep(1500); try { if (conv) await conv.endSession(); } catch (e) {} conv = null; review(); }
+    function review() {
+      stage = "review"; msg.textContent = ""; const x = VX.extract(said.join(". ")); sel.ans = new Set(x.keys.filter(k => k !== "sudden" && ONB_ALL.has(k))); sel.sudden = x.keys.includes("sudden"); if (x.months != null) sel.months = String(x.months); bk(false); window.scrollTo(0, 0);
+      kk("HERE IS WHAT I HEARD"); hh(sel.ans.size || sel.sudden ? "Anything that has changed" : "Nothing picked up yet"); pp(sel.ans.size ? "Tap to remove anything that is not right, and add anything I missed." : "Tap anything that fits, or just continue if nothing has changed.");
+      let h = card("Did it start suddenly, within minutes or hours, like a stroke?", "", sel.sudden, 'data-sudden="1"');
+      const heard = [...sel.ans]; if (heard.length) h += `<div class="lbl">I HEARD</div>` + heard.map(k => card(ONB_ALL.get(k), "", true, `data-q="${k}"`)).join("");
+      const rest = ONB_GROUPS.map(([g, ks]) => [g, ks.filter(k => !sel.ans.has(k))]).filter(([, ks]) => ks.length);
+      h += `<details class="glass card setup"${heard.length ? "" : " open"}><summary>${heard.length ? "Add something I missed" : "Tap anything that fits"}</summary><div style="display:flex;flex-direction:column;gap:10px;margin-top:12px">` + rest.map(([g, ks]) => `<div class="lbl" style="margin:4px 0 0">${esc(g.toUpperCase())}</div>` + ks.map(k => card(ONB_ALL.get(k), "", false, `data-q="${k}"`)).join("")).join("") + `</div></details>`;
+      h += `<div class="glass card"><label class="small" for="onb-months" style="display:block;margin-bottom:6px;font-size:14px">About how many months ago did the first symptom start? (optional)</label><input type="text" inputmode="decimal" id="onb-months" autocomplete="off" placeholder="e.g. 6" value="${esc(sel.months)}"></div>`;
+      $("onb-body").innerHTML = h; $("onb-dots").innerHTML = ""; nx("Looks right. Start my reps", false);
+      $("onb-body").querySelectorAll("button[data-q]").forEach(b => b.onclick = () => { const k = b.dataset.q; sel.ans.has(k) ? sel.ans.delete(k) : sel.ans.add(k); b.classList.toggle("on"); b.setAttribute("aria-pressed", sel.ans.has(k)); });
+      $("onb-body").querySelector("[data-sudden]").onclick = e => { sel.sudden = !sel.sudden; e.currentTarget.classList.toggle("on"); };
+      const mi = $("onb-months"); mi.oninput = () => { sel.months = mi.value.trim(); };
+    }
+    async function save() {
+      nx("Saving...", true); msg.className = "msg";
+      if (sel.sudden) { $("onb-body").innerHTML = `<div class="glass card" style="border:2px solid var(--bad)"><p style="font-size:16px;line-height:1.5">Symptoms that start suddenly, over minutes or hours, can be a medical emergency such as a stroke. <b>Please call your local emergency number or get urgent medical help now.</b></p><p class="small" style="margin-top:10px;font-size:14px">This check-in is not designed for that situation, so please do not continue it.</p></div>`; hh("Please get help now"); kk("PLEASE READ"); pp(""); $("onb-next").hidden = true; if (!DEMO) post({ answers: { sudden: true } }).catch(() => {}); stage = "urgent"; return; }
+      try {
+        if (!DEMO) { const answers = {}; sel.ans.forEach(k => { answers[k] = true; }); const r = await post({ answers, months: sel.months === "" ? null : sel.months, matters: [], consent: true }); if (r.emergency) { sel.sudden = true; return save(); } }
+        resolve(true);
+      } catch (e) { msg.textContent = "Could not save: " + e.message + ". Please try again."; msg.className = "msg bad"; nx("Looks right. Start my reps", false); }
+    }
+    $("onb-back").onclick = () => { if (stage === "intro") { show("v-intro"); resolve(false); } else if (stage === "review") { stage = "intro"; said = []; intro(); } else if (stage === "urgent") { show("v-intro"); resolve(false); } };
+    $("onb-next").onclick = () => { if (stage === "intro") startChat(); else if (stage === "chat") done(); else if (stage === "review") save(); };
+    intro();
+  });
+}
 async function ensureOnboarded(code) {             // false = the patient went Back, do not start
   if (DEMO && !Q.has("onboard")) { TOPICS = Convo.DEFAULT_QUESTIONS.slice(); return true; }
   let st = null; try { const r = await fetch("/api/patient/status?patient=" + encodeURIComponent(code)); if (r.ok) st = await r.json(); else console.warn("onboarding check skipped: /api/patient/status answered " + r.status + (r.status === 404 ? " (restart node server.js: it is running older code)" : r.status === 401 ? " (open the site with ?key=YOUR_KEY first)" : "")); } catch (e) { console.warn("onboarding check skipped: server not reachable", e); }
   if (!st) return true;                            // server not reachable: skip, the check-in still works
-  TOPICS = Array.isArray(st.questions) ? st.questions : []; return st.known ? true : runOnboarding(code);
+  TOPICS = Array.isArray(st.questions) ? st.questions : []; return st.known ? true : runVoiceOnboarding(code);
 }
 
 
 $("begin").onclick = async () => {
   const code = $("code").value.trim(), im = $("imsg"); im.className = "msg";
-  if (!/^[A-Za-z0-9_-]{2,32}$/.test(code)) { im.textContent = "Please enter the patient code from your clinic."; im.className = "msg bad"; return; }
+  if (!/^[A-Za-z0-9_-]{2,32}$/.test(code)) { im.textContent = "Please enter the care code from your clinic."; im.className = "msg bad"; return; }
   try { localStorage.setItem("ns_code", code); } catch (e) {}
-  Object.assign(RUN, { values: {}, vowels: {}, widths: {}, readFrames: null, rows: [], done: [] }); S.abort = false;
-  $("begin").disabled = true; im.textContent = "Checking your code...";
+  Object.assign(RUN, { values: {}, vowels: {}, widths: {}, readFrames: null, rows: [], done: [], xp: 0 }); S.abort = false; HOME.today = false;
+  $("begin").disabled = true; im.textContent = "Checking your care code...";
   try { if (!(await ensureOnboarded(code))) { $("begin").disabled = false; im.textContent = ""; return; } } catch (e) { /* onboarding is best effort: carry on to the check-in */ }
   im.textContent = DEMO ? "Demo mode: no camera needed." : "Asking for camera and microphone, and loading the tracking models (needs internet the first time)...";
   try {
@@ -491,13 +675,16 @@ $("begin").onclick = async () => {
 function showResults(code) {
   show("v-res"); $("rdate").textContent = new Date().toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" }) + " · " + Labs.periodOf(new Date());
   const n = Object.keys(RUN.values).length; $("rhead").textContent = n ? "Nice work." : "We could not get a clean reading.";
+  const g = groups(RUN.done), reps = Object.values(g).filter(Boolean).length, bonus = reps === 3 ? 10 : 0; RUN.xp += bonus;
+  $("rxp").textContent = "+" + RUN.xp + " XP"; $("rstreak").textContent = reps + " of 3 daily reps done" + (bonus ? " · +10 bonus" : "");
+  HOME.today = HOME.today || reps === 3;
   $("rtbl").innerHTML = RUN.rows.map(r => `<tr><td>${esc(r[0])}</td><td>${esc(r[1])}</td></tr>`).join("") || `<tr><td>Nothing was measured reliably this time. Try again in good light and a quiet room.</td><td></td></tr>`;
   $("rnote").textContent = "These numbers mean most compared with your own earlier check-ins, on the same phone in the same spot. They are not a diagnosis. Nothing has been sent yet.";
   $("share").hidden = !n; $("share").disabled = false; $("smsg").textContent = ""; $("prog").hidden = true; loadProgress(code);
 }
 $("share").onclick = async () => {
   const code = $("code").value.trim(), m = $("smsg"); $("share").disabled = true; m.className = "msg"; m.textContent = "Sending...";
-  try { const r = await Companion.save(code, RUN.values, { source: "companion" }); m.textContent = "Shared with your care team" + (r.via === "local" ? " (stored on this device until the server is reachable)." : "."); m.className = "msg ok"; $("share").hidden = true; await loadProgress(code); }
+  try { const r = await Companion.save(code, RUN.values, { source: "companion" }); m.textContent = "Shared with your care team" + (r.via === "local" ? " (stored on this device until the server is reachable)." : "."); m.className = "msg ok"; $("share").hidden = true; HOME.streak = Math.max(HOME.streak, 1); await loadProgress(code); refreshHome(); }
   catch (e) { m.textContent = "Could not send: " + e.message; m.className = "msg bad"; $("share").disabled = false; }
 };
 $("again").onclick = () => { show("v-intro"); };
@@ -535,12 +722,15 @@ $("walkgo").onclick = async () => {
     for (let i = 5; i > 0; i--) { m.textContent = "Put the phone away. Starting in " + i + "..."; await sleep(1000); } const t0 = performance.now(); samples.length = 0;
     while (performance.now() - t0 < 60000) { m.textContent = "Walking... " + Math.ceil(60 - (performance.now() - t0) / 1000) + "s"; await sleep(500); } window.removeEventListener("devicemotion", on);
     const g = GaitFeatures.analyze(samples); if (!g.ok) { m.textContent = "Could not read the walk: " + g.bad.join("; "); m.className = "msg bad"; return; }
-    const r = await Companion.save($("code").value.trim(), { gait_cadence: +g.cadence.toFixed(0), gait_stride_cv: +g.stride_cv_pct.toFixed(1) }, { source: "companion" }); m.textContent = `Walk saved: ${g.cadence.toFixed(0)} steps/min.`; m.className = "msg ok"; loadProgress($("code").value.trim());
+    const r = await Companion.save($("code").value.trim(), { gait_cadence: +g.cadence.toFixed(0), gait_stride_cv: +g.stride_cv_pct.toFixed(1) }, { source: "companion" }); m.textContent = `Walk saved: ${g.cadence.toFixed(0)} steps/min. +20 XP`; m.className = "msg ok"; loadProgress($("code").value.trim());
   } catch (e) { m.textContent = "Could not do the walk test: " + ((e && e.message) || e); m.className = "msg bad"; }
   finally { $("walkgo").disabled = false; }
 };
 
 try { $("code").value = Q.get("patient") || localStorage.getItem("ns_code") || ""; } catch (e) { $("code").value = Q.get("patient") || ""; }
+document.querySelectorAll("[data-d]").forEach(b => b.onclick = () => $(b.dataset.d).showModal());
+document.querySelectorAll("dialog [data-close]").forEach(b => b.onclick = () => b.closest("dialog").close());
+$("code").addEventListener("change", refreshHome); paintHome(); refreshHome();
 window.addEventListener("pagehide", teardown);
 </script>
 </body>
