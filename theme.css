@@ -27,7 +27,7 @@ h1,h2,h3{font-family:var(--f-head);margin:0;font-weight:600;letter-spacing:-.01e
 /* ---- shared page shell + sidebar nav (used by every page via nav.js) ---- */
 .shell{display:grid;grid-template-columns:220px minmax(0,1fr);gap:16px;padding:20px 20px 40px 28px;max-width:1500px}
 .side{position:sticky;top:20px;align-self:start;margin-right:20px;display:flex;flex-direction:column;min-height:calc(100vh - 40px)}
-.logo{font:600 22px var(--f-head);padding:6px 10px 18px}
+.logo{font:600 22px var(--f-head);padding:6px 10px 18px;display:flex;align-items:center;gap:10px}.logo img{border-radius:8px;flex:none}
 .side nav a,nav.main-nav a{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;margin-bottom:16px;border-radius:99px;color:var(--ink);text-decoration:none;background:var(--card);border:1px solid var(--glass-line)}
 .side nav a.on,nav.main-nav a.on{background:var(--pill);color:var(--page)}
 .side .side-bottom{margin-top:auto}
